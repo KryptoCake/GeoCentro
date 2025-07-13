@@ -1,32 +1,27 @@
 import os
 import time
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+import os
+import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 
 def run_task():
     """
     This task uses Selenium to download the full HTML content from the INETER seismology page
     and saves it to a local file, overwriting it each time.
+    It uses webdriver-manager to automatically handle the chromedriver.
     """
-    # Path to the ChromeDriver executable, as provided by the user
-    chromedriver_path = r'C:\Users\PC\Documents\Proyectos_nuevos\AutomationAgent\chromedriver-win64\chromedriver.exe'
     # Path to save the resulting HTML file
     output_html_path = os.path.join(os.path.dirname(__file__), '..', 'lista_de_sismos.html')
     url = 'https://webserver2.ineter.gob.ni/geofisica/sis/events/sismos.php'
 
     print(f"    - Starting Selenium task to download HTML from: {url}")
 
-    if not os.path.exists(chromedriver_path):
-        print(f"    [!] CRITICAL ERROR: ChromeDriver not found at {chromedriver_path}")
-        print("    [!] Please ensure the path is correct and the file exists.")
-        return
-
-    service = Service(executable_path=chromedriver_path)
     options = Options()
-    # Set the path to the custom Chrome browser binary
-    options.binary_location = r'C:\Users\PC\Documents\Proyectos_nuevos\AutomationAgent\chrome-win64\chrome.exe'
-    options.add_argument('--headless')  # Run in headless mode (no browser window)
+    options.add_argument('--headless')
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('--window-size=1920x1080')
@@ -34,6 +29,7 @@ def run_task():
 
     driver = None
     try:
+        service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
         print("    - Chrome WebDriver started.")
         
