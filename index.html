@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Sismos Recientes</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+        #controls { padding: 10px; background-color: #f4f4f4; border-bottom: 1px solid #ddd; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        #controls label { font-weight: bold; }
+        #controls input[type="date"], #controls input[type="number"], #controls select, #controls button { padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        #map { flex-grow: 1; }
+        .popup-content {
+            font-size: 14px;
+        }
+        .popup-content b {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <label for="start_date">Desde:</label>
+    <input type="date" id="start_date">
+
+    <label for="end_date">Hasta:</label>
+    <input type="date" id="end_date">
+
+    <label for="region_filter">Región:</label>
+    <select id="region_filter">
+        <option value="all">Todas</option>
+    </select>
+
+    <label for="min_depth">Prof. Min (km):</label>
+    <input type="number" id="min_depth" step="any" min="0">
+
+    <label for="max_depth">Prof. Max (km):</label>
+    <input type="number" id="max_depth" step="any" min="0">
+
+    <label for="min_magnitude">Mag. Min:</label>
+    <input type="number" id="min_magnitude" step="0.1" min="0">
+
+    <label for="max_magnitude">Mag. Max:</label>
+    <input type="number" id="max_magnitude" step="0.1" min="0">
+
+    <button id="apply_filters">Aplicar Filtros</button>
+    <button id="reset_filters">Restablecer</button>
+</div>
+
+<div id="map"></div>
+
+<script>
+    const map = L.map('map').setView([12.8654, -85.2072], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    let markers = L.featureGroup().addTo(map); // Group to manage markers
+
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    const regionFilter = document.getElementById('region_filter');
+    const minDepthInput = document.getElementById('min_depth');
+    const maxDepthInput = document.getElementById('max_depth');
+    const minMagnitudeInput = document.getElementById('min_magnitude');
+    const maxMagnitudeInput = document.getElementById('max_magnitude');
+    const applyFiltersBtn = document.getElementById('apply_filters');
+    const resetFiltersBtn = document.getElementById('reset_filters');
+
+    // Function to format date to YYYY-MM-DD
+    function formatDate(date) {
+        const d = new Date(date);
+        let month = '' + (d.getMonth() + 1);
+        let day = '' + d.getDate();
+        const year = d.getFullYear();
+
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+
+        return [year, month, day].join('-');
+    }
+
+    // Set default dates (last 10 days) and other filter values
+    function initializeFilterControls() {
+        const today = new Date();
+        const tenDaysAgo = new Date();
+        tenDaysAgo.setDate(today.getDate() - 10);
+        endDateInput.value = formatDate(today);
+        startDateInput.value = formatDate(tenDaysAgo);
+
+        regionFilter.value = 'all';
+        minDepthInput.value = '0';
+        maxDepthInput.value = '500';
+        minMagnitudeInput.value = '0';
+        maxMagnitudeInput.value = '9';
+    }
+
+    // Populate region filter
+    function populateRegions() {
+        fetch('/api/regions')
+            .then(response => response.json())
+            .then(regions => {
+                regions.forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region;
+                    option.textContent = region;
+                    regionFilter.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching regions:', error));
+    }
+
+    // Function to load sismos based on filters
+    function loadSismos() {
+        markers.clearLayers(); // Clear existing markers
+
+        const params = new URLSearchParams();
+        // Only append if value is not empty or default (for numbers)
+        if (startDateInput.value) params.append('start_date', startDateInput.value);
+        if (endDateInput.value) params.append('end_date', endDateInput.value);
+        if (regionFilter.value && regionFilter.value !== 'all') params.append('region', regionFilter.value);
+        if (minDepthInput.value !== '' && parseFloat(minDepthInput.value) !== 0) params.append('min_depth', minDepthInput.value);
+        if (maxDepthInput.value !== '' && parseFloat(maxDepthInput.value) !== 500) params.append('max_depth', maxDepthInput.value);
+        if (minMagnitudeInput.value !== '' && parseFloat(minMagnitudeInput.value) !== 0) params.append('min_magnitude', minMagnitudeInput.value);
+        if (maxMagnitudeInput.value !== '' && parseFloat(maxMagnitudeInput.value) !== 9) params.append('max_magnitude', maxMagnitudeInput.value);
+
+        fetch(`/api/sismos?${params.toString()}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(sismos => {
+                if (sismos.error) {
+                    console.error('Error fetching data:', sismos.error);
+                    alert("Error al cargar los datos de sismos: " + sismos.error);
+                    return;
+                }
+
+                console.log(`Loaded ${sismos.length} seismic events.`);
+
+                sismos.forEach(sismo => {
+                    const lat = sismo.latitud;
+                    const lon = sismo.longitud;
+
+                    const marker = L.marker([lat, lon]);
+
+                    const popupText = `
+                        <div class="popup-content">
+                            <b>Región:</b> ${sismo.region}<br>
+                            <b>Magnitud:</b> ${sismo.magnitud_richter} Richter<br>
+                            <b>Profundidad:</b> ${sismo.profundidad_km} km<br>
+                            <b>Fecha:</b> ${sismo.fecha}<br>
+                            <b>Hora:</b> ${sismo.hora}
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupText);
+                    markers.addLayer(marker);
+                });
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                alert("No se pudieron cargar los datos del mapa. Revisa la consola del servidor para más detalles.");
+            });
+    }
+
+    // Event Listeners
+    applyFiltersBtn.addEventListener('click', loadSismos);
+    resetFiltersBtn.addEventListener('click', () => {
+        initializeFilterControls(); // Reset all controls to default
+        loadSismos();
+    });
+
+    // Initial load
+    initializeFilterControls(); // Set initial default values
+    populateRegions();
+    loadSismos();
+</script>
+
+</body>
+</html>
