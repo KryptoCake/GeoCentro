@@ -14,7 +14,7 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
   - [x] Instalar `gunicorn` en el entorno virtual.
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Environment and Files Preparation' (Protocol in workflow.md)** [211891c]
 
-## Phase 2: Configuration and Daemon Setup
+## Phase 2: Configuration and Daemon Setup [checkpoint: 23d4c96]
 - [x] **Task: Configurar e iniciar el servicio Gunicorn con Systemd** [b54fe58]
   - [x] Crear el archivo de servicio `/etc/systemd/system/geocentro.service` configurado para ejecutarse como el usuario adecuado y apuntar a `/var/www/geocentro`.
   - [x] Recargar el daemon de Systemd (`systemctl daemon-reload`).
@@ -26,14 +26,17 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
   - [x] Deshabilitar el sitio predeterminado (default) de Nginx.
   - [x] Verificar la sintaxis de la configuración de Nginx (`nginx -t`).
   - [x] Reiniciar Nginx (`systemctl restart nginx`).
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: Configuration and Daemon Setup' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: Configuration and Daemon Setup' (Protocol in workflow.md)** [23d4c96]
 
 ## Phase 3: Scraping Automation and Final Verification
-- [ ] **Task: Configurar Cron Job para automatización de Scraping**
-  - [ ] Agregar una tarea en crontab para ejecutar `/var/www/geocentro/venv/bin/python scraper.py` cada 30 minutos, guardando logs en `/var/www/geocentro/scraper.log`.
-- [ ] **Task: Pruebas de funcionamiento y verificación del sitio**
-  - [ ] Realizar una petición curl local `curl http://127.0.0.1:8000` para comprobar la respuesta directa de Gunicorn.
-  - [ ] Realizar una petición a la IP pública del VPS o al dominio configurado para comprobar que Nginx sirve la aplicación.
-  - [ ] Ejecutar manualmente el scraper una vez desde el entorno virtual para verificar que se conecta correctamente a INETER y almacena datos en la BD de producción.
-  - [ ] Validar que se crea el archivo `scraper.log` y registrar cualquier error inicial.
+- [~] **Task: Configurar Cron Job para automatización de Scraping**
+  - [x] Crear script de automatización `setup_cron.sh` para crontab.
+  - [ ] Ejecutar `setup_cron.sh` para registrar el cron job en el sistema.
+- [~] **Task: Pruebas de funcionamiento y verificación del sitio**
+  - [x] Crear script `verify_all.sh` para comprobar servicios, logs y registros de base de datos.
+  - [ ] Ejecutar manualmente el scraper una vez desde el entorno virtual para verificar la conexión con INETER.
+  - [ ] Ejecutar `verify_all.sh` para confirmar que todo funciona correctamente.
+- [x] **Task: Configurar subdominio DNS en Coolify proxy** [274938e]
+  - [x] Ejecutar `configure_subdomain.sh` para registrar el subdominio `geocentro.grupopy.me`.
+  - [x] Verificar la resolución DNS y la accesibilidad HTTPS a `geocentro.grupopy.me`.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 3: Scraping Automation and Final Verification' (Protocol in workflow.md)**
