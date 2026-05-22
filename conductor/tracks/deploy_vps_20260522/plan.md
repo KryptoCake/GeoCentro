@@ -15,11 +15,11 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Environment and Files Preparation' (Protocol in workflow.md)** [211891c]
 
 ## Phase 2: Configuration and Daemon Setup
-- [ ] **Task: Configurar e iniciar el servicio Gunicorn con Systemd**
-  - [ ] Crear el archivo de servicio `/etc/systemd/system/geocentro.service` configurado para ejecutarse como el usuario adecuado y apuntar a `/var/www/geocentro`.
-  - [ ] Recargar el daemon de Systemd (`systemctl daemon-reload`).
-  - [ ] Iniciar el servicio `geocentro.service` y habilitarlo para que inicie con el sistema.
-  - [ ] Verificar el estado de la aplicación mediante `systemctl status geocentro`.
+- [x] **Task: Configurar e iniciar el servicio Gunicorn con Systemd** [b54fe58]
+  - [x] Crear el archivo de servicio `/etc/systemd/system/geocentro.service` configurado para ejecutarse como el usuario adecuado y apuntar a `/var/www/geocentro`.
+  - [x] Recargar el daemon de Systemd (`systemctl daemon-reload`).
+  - [x] Iniciar el servicio `geocentro.service` y habilitarlo para que inicie con el sistema.
+  - [x] Verificar el estado de la aplicación mediante `systemctl status geocentro`.
 - [ ] **Task: Configurar Nginx como Proxy Inverso**
   - [ ] Crear el archivo de configuración de Nginx `/etc/nginx/sites-available/geocentro` apuntando al puerto local 8000 y definiendo el alias para `/static/`.
   - [ ] Habilitar el sitio mediante enlace simbólico a `/etc/nginx/sites-enabled/`.
