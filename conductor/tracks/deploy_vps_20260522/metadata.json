@@ -1,0 +1,8 @@
+{
+  "track_id": "deploy_vps_20260522",
+  "type": "deployment",
+  "status": "new",
+  "created_at": "2026-05-22T04:35:00Z",
+  "updated_at": "2026-05-22T04:35:00Z",
+  "description": "Deploy website on Hostinger VPS"
+}
