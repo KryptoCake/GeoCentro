@@ -1,0 +1,84 @@
+🌋🌎 PROYECTO: CentroGeo — Observatorio Geológico y Climático de Centroamérica
+🎯 Objetivo General:
+Crear un sitio web de monitoreo geológico y climático que recopile, procese y visualice información proveniente de sitios oficiales de los países centroamericanos, utilizando técnicas de web scraping, y desplegarlo en un hosting compartido (Hostinger). El enfoque inicial será sísmico y volcánico, con futura expansión a fenómenos climáticos extremos.
+
+📌 Tecnologías sugeridas (enfocadas a hosting compartido):
+Backend:
+Python (con Flask): Para tareas de scraping automatizadas mediante scripts programados (por ejemplo, con BeautifulSoup o Selenium) y para manejar las rutas y lógica del sitio. Flask es ligero y puede correr sin problemas en hostings compartidos como Hostinger si se empaqueta con WSGI (usando passenger o fastcgi, dependiendo del plan).
+
+Alternativamente: PHP si prefieres integrarte rápido con el entorno nativo del hosting, aunque sacrificas parte de la potencia del scraping.
+
+Frontend:
+HTML + CSS + JavaScript (vanilla o con algún framework ligero como Alpine.js) para la estructura visual.
+
+Para el mapa: Leaflet.js (ligero, de código abierto, excelente para mapas interactivos, ideal para cargar puntos sísmicos, volcanes y cámaras).
+
+Base de Datos:
+SQLite si vas por algo simple embebido.
+
+MySQL si usas el que viene incluido con Hostinger.
+
+Automatización:
+n8n o cron jobs desde tu máquina local o servidor externo que haga scraping, procese datos y los suba por FTP o vía API a tu hosting.
+
+🌍 Estructura del sitio:
+1. Portada (Home)
+Mapa interactivo centrado en Centroamérica (Leaflet.js + OpenStreetMap)
+
+Marcadores para:
+
+Sismos recientes (últimas 72 horas)
+
+Volcanes activos
+
+Cámaras en vivo (embed desde YouTube o enlaces directos)
+
+Noticias destacadas (scraping de secciones de noticias sísmicas/climáticas)
+
+Información turística (ligada a zonas volcánicas seguras o atractivos naturales cercanos)
+
+2. Información Histórica
+Listado filtrable por país, año, intensidad, tipo de evento.
+
+Estadísticas: top 10 terremotos más intensos, erupciones registradas, zonas más sísmicas.
+
+3. Herramientas
+Calculadora de riesgo sísmico por coordenadas (mockup inicial)
+
+Zona de descargas de informes
+
+Enlace a Telegram/WhatsApp para alertas automatizadas
+
+Integración futura con IA para predicción de patrones
+
+🌋 Fase piloto: Nicaragua
+Sitios a scrapear:
+INETER sitio principal
+
+Servidor INETER con datos crudos
+
+Ideas de secciones específicas:
+
+Últimos 10 sismos con tabla, magnitud, profundidad, ubicación y enlace a mapa
+
+Webcam del volcán Masaya o San Cristóbal (si está disponible)
+
+RSS de noticias geológicas del país
+
+🔐 Aspectos técnicos a cuidar:
+Scraping ético y responsable: limitar la frecuencia, respetar robots.txt, y ofrecer siempre crédito con enlace.
+
+Cacheo de datos: evitar recargar el sitio fuente cada vez, usando caché local cada 10-30 min.
+
+Compatibilidad del hosting: verifica si tu plan permite cron jobs, o prepara un flujo n8n que lo corra desde otro entorno y suba los datos al FTP de Hostinger.
+
+🧠 Futura expansión (fase 2+):
+Centro de alertas con sistema de colores (verde, amarillo, rojo)
+
+App móvil (usando Flutter o PWA)
+
+API pública para que otros sitios puedan consumir tu data
+
+Conexión con sensores físicos o estaciones climáticas comunitarias (Internet of Things)
+
+Monetización mediante donaciones, acceso premium a datasets, o incluso como recurso educativo para colegios

@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Monitoreo Geológico de Centroamérica{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero">
+    <div class="hero-text">
+        <h1>Observatorio Geológico y Sísmico</h1>
+        <p>Centroamérica y Nicaragua en Monitoreo Activo</p>
+    </div>
+    
+    <!-- Quick Stats Cards -->
+    <div class="stats-summary-grid">
+        <div class="stat-card">
+            <div class="stat-icon sismo"><i class="fa-solid fa-house-crack"></i></div>
+            <div class="stat-info">
+                <span class="stat-value" id="stat-total-sismos">0</span>
+                <span class="stat-label">Sismos Monitoreados</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon max-mag"><i class="fa-solid fa-bolt"></i></div>
+            <div class="stat-info">
+                <span class="stat-value" id="stat-max-mag">0.0</span>
+                <span class="stat-label">Magnitud Máxima</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon volcanes"><i class="fa-solid fa-volcano"></i></div>
+            <div class="stat-info">
+                <span class="stat-value">6</span>
+                <span class="stat-label">Volcanes Activos</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon local"><i class="fa-solid fa-clock"></i></div>
+            <div class="stat-info">
+                <span class="stat-value" style="font-size: 1.1rem; line-height: 1.5;" id="stat-last-update">-</span>
+                <span class="stat-label">Último Análisis</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map and Recent List Container -->
+<section class="map-section-container">
+    <div class="section-title-container">
+        <h2><i class="fa-solid fa-earth-americas"></i> Mapa de Actividad Reciente</h2>
+        <span class="pulse-indicator"><span class="pulse-dot"></span> En Vivo</span>
+    </div>
+    
+    <div class="map-layout-grid">
+        <!-- Interactive Map Element -->
+        <div class="map-card card">
+            <div id="main-map"></div>
+            <!-- Map Legend -->
+            <div class="map-legend">
+                <span class="legend-title">Magnitud:</span>
+                <span class="legend-item"><span class="legend-color val-low"></span> &lt; 3.0</span>
+                <span class="legend-item"><span class="legend-color val-med"></span> 3.0 - 4.9</span>
+                <span class="legend-item"><span class="legend-color val-high"></span> &gt;= 5.0</span>
+                <span class="legend-item"><i class="fa-solid fa-volcano icon-volcan" style="color: #ff5722; font-size: 0.9rem; margin-right: 5px;"></i> Volcán</span>
+            </div>
+        </div>
+        
+        <!-- Recent Sismos Side Panel -->
+        <div class="recent-sismos-panel card">
+            <div class="panel-header">
+                <h3>Últimos Eventos</h3>
+                <span class="badge" id="sismos-badge">0</span>
+            </div>
+            <div class="sismos-list-scroll" id="recent-sismos-list">
+                <!-- Javascript will load recent sismos list here -->
+                <div class="loading-placeholder">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Cargando eventos...
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- News & Volcanoes Tourism Grid -->
+<div class="news-tourism-grid">
+    <!-- News Column -->
+    <section class="news-section card">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-newspaper"></i> Noticias y Alertas</h2>
+            <a href="/historical" class="section-link">Ver todo <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+        <div class="news-feed" id="news-feed-container">
+            <div class="loading-placeholder">
+                <i class="fa-solid fa-spinner fa-spin"></i> Cargando noticias...
+            </div>
+        </div>
+    </section>
+    
+    <!-- Tourism Column -->
+    <section class="tourism-section card">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-map-location-dot"></i> Información Turística Volcánica</h2>
+        </div>
+        <div class="tourism-grid">
+            <div class="tourism-card">
+                <div class="tourism-img-wrapper" style="background-image: url('https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=400&auto=format&fit=crop');">
+                    <div class="tourism-badge safe">Permitido</div>
+                </div>
+                <div class="tourism-info">
+                    <h4>Parque Nacional Volcán Masaya</h4>
+                    <p>Fácil acceso en vehículo hasta el cráter Santiago. Disfruta de la vista directa al lago de lava incandescente. Abierto para visitas nocturnas bajo supervisión.</p>
+                    <div class="tourism-meta">
+                        <span><i class="fa-solid fa-car"></i> Acceso Fácil</span>
+                        <span><i class="fa-solid fa-shield-halved"></i> Alerta Verde</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tourism-card">
+                <div class="tourism-img-wrapper" style="background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=400&auto=format&fit=crop');">
+                    <div class="tourism-badge caution">Aventura</div>
+                </div>
+                <div class="tourism-info">
+                    <h4>Volcán Cerro Negro</h4>
+                    <p>Famoso a nivel mundial por el deporte extremo de <em>Volcano Boarding</em>. Una pendiente de ceniza volcánica negra ideal para deslizarse a gran velocidad.</p>
+                    <div class="tourism-meta">
+                        <span><i class="fa-solid fa-person-walking-hiking"></i> Nivel Medio</span>
+                        <span><i class="fa-solid fa-fire"></i> Activo</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tourism-card">
+                <div class="tourism-img-wrapper" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=400&auto=format&fit=crop');">
+                    <div class="tourism-badge restricted">Acceso Regulado</div>
+                </div>
+                <div class="tourism-info">
+                    <h4>Volcán Momotombo</h4>
+                    <p>Ubicado frente al lago de Managua, ofrece una de las postales más icónicas de Nicaragua. Ascenso complejo de alta dificultad y vistas impresionantes.</p>
+                    <div class="tourism-meta">
+                        <span><i class="fa-solid fa-triangle-exclamation"></i> Guía Obligatorio</span>
+                        <span><i class="fa-solid fa-mountain"></i> Elevado</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Volcano Webcam Modal (Pop up from Map or webcam grid) -->
+<div id="webcam-modal" class="modal">
+    <div class="modal-content card">
+        <span class="close-modal" id="close-webcam-modal">&times;</span>
+        <h3 id="modal-webcam-title">Monitoreo en Vivo - Volcán</h3>
+        <div class="webcam-container">
+            <img id="modal-webcam-img" src="" alt="Transmisión de cámara web">
+            <div class="webcam-status-bar">
+                <span class="live-dot-container"><span class="live-dot"></span> EN VIVO</span>
+                <span class="webcam-time" id="modal-webcam-time">Actualizando...</span>
+                <button class="btn-refresh-webcam" id="btn-refresh-modal-webcam"><i class="fa-solid fa-arrows-rotate"></i> Recargar</button>
+            </div>
+        </div>
+        <p class="webcam-notice">Transmisión oficial de la red de monitoreo de INETER. Las imágenes se actualizan cada pocos minutos.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}

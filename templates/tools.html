@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Herramientas de Análisis{% endblock %}
+
+{% block content %}
+<div class="tools-container">
+    <div class="page-title-area">
+        <h1><i class="fa-solid fa-screwdriver-wrench"></i> Herramientas de Monitoreo y Análisis</h1>
+        <p>Accede a herramientas dinámicas para el seguimiento y estimación de riesgo geológico.</p>
+    </div>
+    
+    <!-- Row 1: Seismograms and Risk Calculator -->
+    <div class="tools-grid-top">
+        <!-- Seismogram Tool -->
+        <div class="seismogram-card card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-waveform"></i> Sismogramas en Vivo (INETER)</h2>
+                <p>Genera y visualiza gráficos dinámicos de las estaciones sismográficas en Nicaragua.</p>
+            </div>
+            
+            <form id="seismogram-form" class="tools-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="seismo-station">Estación / Zona</label>
+                        <select id="seismo-station" name="station">
+                            <!-- Volcanes -->
+                            <optgroup label="Monitoreo Volcánico">
+                                <option value="MASN/MIR2_EHZ_NU_00">Volcán Masaya - Mirador 2 (MIR2)</option>
+                                <option value="MASN/MASN_EHZ_NU_00">Volcán Masaya - Estación Principal (MASN)</option>
+                                <option value="MASN/NANN_HHZ_NU_--">Volcán Masaya - Nandasmo (NANN)</option>
+                                <option value="APYN/APQ4_EHZ_NU_00">Volcán Apoyeque - Frescamar (APQ4)</option>
+                                <option value="CRIN/PKGN_EHZ_NU_00">Volcán San Cristóbal - Cerro Pekín (PKGN)</option>
+                                <option value="CRIN/CRIN_HHZ_NU_--">Volcán San Cristóbal - Estación Principal (CRIN)</option>
+                                <option value="TELN/PLRN_EHZ_NU_00">Volcán Telica - Planta Polaris (PLRN)</option>
+                                <option value="TELN/HERN_EHZ_NU_00">Volcán Telica - Cráter (HERN)</option>
+                                <option value="CNGN/CNGA_EHZ_NU_00">Volcán Cerro Negro - Visitantes (CNGA)</option>
+                                <option value="MOMN/MOM3_EHZ_NU_00">Volcán Momotombo - Bella Vista (MOM3)</option>
+                                <option value="MOMN/MOM2_EHZ_NU_50">Volcán Momotombo - El Cardón (MOM2)</option>
+                                <option value="CONN/JAPN_EHZ_NU_00">Volcán Concepción - Japón (JAPN)</option>
+                                <option value="CSGN/CSGN_EHZ_NU_01">Volcán Cosigüina (CSGN)</option>
+                            </optgroup>
+                            <!-- Regionales y Otras -->
+                            <optgroup label="Estaciones Regionales y Red Nacional">
+                                <option value="SJRC/RCVN_EHZ_NU_00">San Juan de Río Coco - El Varillal (RCVN)</option>
+                                <option value="RASPB/SINAP_EHZ_NU_00">Raspberry Shake - SINAPRED Managua (SINAP)</option>
+                                <option value="inetersp/UNI2_EHZ_NU_11">Período Corto - INETER Managua (UNI2)</option>
+                                <option value="PEBBLE/R01_HHZ_N2_00">Banda Ancha - INETER Pozo (R01)</option>
+                                <option value="acelerografos/BOAB_HNZ_GE_--">Acelerográfica - Boaco (BOAB)</option>
+                                <option value="ETNA2/A02_HNZ_N2_00">SINAREM Acel. - Enatrel Ticuantepe (A02)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="seismo-date">Fecha</label>
+                        <input type="date" id="seismo-date" name="date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="seismo-period">Periodo de Corte</label>
+                        <select id="seismo-period" name="period">
+                            <option value="12">12:00 PM - 11:59 PM (12)</option>
+                            <option value="00">12:00 AM - 11:59 AM (00)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-image"></i> Cargar Sismograma</button>
+            </form>
+            
+            <div class="seismogram-display-area">
+                <div class="seismogram-img-wrapper" id="seismo-img-container">
+                    <div id="seismo-placeholder" class="seismo-placeholder" style="display: flex; align-items: center; justify-content: center; min-height: 200px;">
+                        <p class="seismo-placeholder-text">Selecciona los parámetros y presiona "Cargar Sismograma" para ver la imagen de INETER.</p>
+                    </div>
+                    <img id="seismogram-img" src="" alt="Sismograma en vivo" style="display: none; width: 100%; border-radius: 8px; border: 1px solid var(--border-color, rgba(255,255,255,0.08));">
+                </div>
+                <div class="seismo-info-box" id="seismo-info" style="display: none; margin-top: 15px; padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color, rgba(255,255,255,0.08));">
+                    <span class="info-tag" style="background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">Información</span>
+                    <p style="margin-top: 10px; margin-bottom: 5px;">Estación: <strong id="seismo-station-name">-</strong></p>
+                    <p id="seismo-time-info" style="margin-bottom: 10px; color: var(--text-secondary); font-size: 0.85rem;">-</p>
+                    <p style="font-size: 0.8rem; line-height: 1.4; color: var(--text-secondary); border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; margin: 0;">La nomenclatura representa: <strong>CódigoEstación_Canal_Red_Ubicación.AÑOmesdiaPeriodo.gif</strong>. Las imágenes son servidas directamente del servidor primario de INETER.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Risk Calculator Tool -->
+        <div class="risk-calc-card card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-calculator"></i> Calculadora de Riesgo Sísmico</h2>
+                <p>Evalúa el nivel de vulnerabilidad sísmica estimado según ubicación y tipo de construcción.</p>
+            </div>
+            
+            <form id="risk-calc-form" class="tools-form">
+                <div class="form-group">
+                    <label>Coordenadas del Sitio</label>
+                    <div class="range-inputs">
+                        <input type="number" id="calc-lat" step="0.0001" placeholder="Latitud (Ej. 12.1)" required>
+                        <input type="number" id="calc-lon" step="0.0001" placeholder="Longitud (Ej. -86.2)" required>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-get-location" style="margin-top: 8px;"><i class="fa-solid fa-location-crosshairs"></i> Obtener Ubicación</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="calc-structure">Tipo de Estructura</label>
+                    <select id="calc-structure" required>
+                        <option value="0.9">Adobe / Bahareque (Muy Vulnerable)</option>
+                        <option value="0.7">Mampostería sin refuerzo (Vulnerable)</option>
+                        <option value="0.4">Concreto Reforzado (Resistente)</option>
+                        <option value="0.2">Acero / Metal (Muy Resistente)</option>
+                        <option value="0.3">Madera estructural (Flexible/Resistente)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="calc-soil">Tipo de Suelo</label>
+                    <select id="calc-soil" required>
+                        <option value="0.8">Suelo blando, arcilla o arena (Amplifica ondas)</option>
+                        <option value="0.5">Suelo firme, grava o suelo compactado</option>
+                        <option value="0.2">Roca madre sólida (Atenúa vibraciones)</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-chart-simple"></i> Calcular Riesgo</button>
+            </form>
+            
+            <div class="risk-result-area" id="risk-result" style="display: none;">
+                <div class="gauge-wrapper">
+                    <div class="gauge-container">
+                        <div class="gauge-bar" id="risk-gauge-bar"></div>
+                        <div class="gauge-text">
+                            <span class="value" id="risk-val">0%</span>
+                            <span class="label" id="risk-label">Bajo</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="risk-details">
+                    <h4>Diagnóstico Estimado:</h4>
+                    <p id="risk-report">Completa la simulación para obtener un informe dinámico.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Row 2: Live Volcanic Webcams -->
+    <section class="webcams-section-container card">
+        <div class="card-header webcam-header">
+            <div>
+                <h2><i class="fa-solid fa-camera"></i> Cámaras Web de Volcanes en Vivo</h2>
+                <p>Monitoreo visual continuo de los principales conos activos de Nicaragua a través de la red INETER.</p>
+            </div>
+            <div class="webcam-controls">
+                <label class="switch-container">
+                    <input type="checkbox" id="auto-refresh-webcams" checked>
+                    <span class="switch-slider"></span>
+                    <span class="switch-label">Auto-recargar (30s)</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="webcams-grid">
+            <!-- Volcán Masaya -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Masaya</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-masaya" class="webcam-feed" src="/api/webcam/proxy?volcan=v_masaya" alt="Cámara Volcán Masaya">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_masaya"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+            
+            <!-- Volcán San Cristóbal -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán San Cristóbal</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-sancris" class="webcam-feed" src="/api/webcam/proxy?volcan=v_sancris2" alt="Cámara Volcán San Cristóbal">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_sancris2"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+            
+            <!-- Volcán Momotombo -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Momotombo</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-momotombo" class="webcam-feed" src="/api/webcam/proxy?volcan=v_momotombo" alt="Cámara Volcán Momotombo">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_momotombo"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+            
+            <!-- Volcán Telica -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Telica</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-telica" class="webcam-feed" src="/api/webcam/proxy?volcan=v_telica" alt="Cámara Volcán Telica">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_telica"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tools.js') }}"></script>
+{% endblock %}

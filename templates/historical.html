@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial y Estadísticas Sísmicas{% endblock %}
+
+{% block content %}
+<div class="historical-container">
+    <div class="page-title-area">
+        <h1><i class="fa-solid fa-clock-rotate-left"></i> Historial de Actividad Sísmica</h1>
+        <p>Busca, filtra y analiza el registro histórico de eventos en la región.</p>
+    </div>
+    
+    <div class="historical-layout-grid">
+        <!-- Sidebar: Filters -->
+        <aside class="filters-sidebar card">
+            <h3><i class="fa-solid fa-filter"></i> Filtros de Búsqueda</h3>
+            <form id="filter-form">
+                <div class="form-group">
+                    <label for="filter-pais">País</label>
+                    <select id="filter-pais" name="pais">
+                        <option value="">Todos los países</option>
+                        <option value="Nicaragua">Nicaragua</option>
+                        <option value="El Salvador">El Salvador</option>
+                        <option value="Guatemala">Guatemala</option>
+                        <option value="Honduras">Honduras</option>
+                        <option value="Costa Rica">Costa Rica</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="filter-min-mag">Magnitud Mínima: <span id="mag-val">1.0</span></label>
+                    <input type="range" id="filter-min-mag" name="min_magnitud" min="1.0" max="8.0" step="0.1" value="1.0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Profundidad (km)</label>
+                    <div class="range-inputs">
+                        <input type="number" id="filter-min-depth" name="profundidad_min" placeholder="Min" min="0">
+                        <input type="number" id="filter-max-depth" name="profundidad_max" placeholder="Max" min="0">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="filter-start-date">Fecha Inicio</label>
+                    <input type="date" id="filter-start-date" name="fecha_inicio">
+                </div>
+                
+                <div class="form-group">
+                    <label for="filter-end-date">Fecha Fin</label>
+                    <input type="date" id="filter-end-date" name="fecha_fin">
+                </div>
+                
+                <div class="form-group">
+                    <label for="filter-search">Buscar en ubicación</label>
+                    <input type="text" id="filter-search" name="buscar" placeholder="Ej. Masachapa, Tola...">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-magnifying-glass"></i> Aplicar Filtros</button>
+                <button type="button" id="btn-reset-filters" class="btn btn-secondary btn-block"><i class="fa-solid fa-trash-can"></i> Limpiar</button>
+            </form>
+        </aside>
+        
+        <!-- Main: Analytics & Data Table -->
+        <div class="historical-main-content">
+            <!-- Charts Section -->
+            <div class="analytics-charts-grid">
+                <div class="chart-card card">
+                    <h3><i class="fa-solid fa-chart-line"></i> Sismos por Día</h3>
+                    <div class="chart-container">
+                        <canvas id="chart-timeline"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card card">
+                    <h3><i class="fa-solid fa-chart-pie"></i> Distribución por País</h3>
+                    <div class="chart-container">
+                        <canvas id="chart-countries"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Table Section -->
+            <div class="table-card card">
+                <div class="table-header">
+                    <h3>Registro de Eventos</h3>
+                    <button class="btn btn-outline" id="btn-export-csv"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="data-table" id="sismos-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha (UTC)</th>
+                                <th>Hora</th>
+                                <th>Magnitud</th>
+                                <th>Profundidad</th>
+                                <th>Ubicación</th>
+                                <th>País</th>
+                                <th>Coordenadas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historical-table-body">
+                            <!-- Loaded via Javascript -->
+                            <tr>
+                                <td colspan="7" class="loading-cell">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Cargando registros históricos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination-container" id="table-pagination">
+                    <button class="btn btn-outline btn-sm" id="btn-prev" disabled><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                    <span id="pagination-info">Mostrando 0-0 de 0 eventos</span>
+                    <button class="btn btn-outline btn-sm" id="btn-next" disabled>Siguiente <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/historical.js') }}"></script>
+{% endblock %}

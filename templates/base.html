@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoCentro - {% block title %}Observatorio Geológico y Climático{% endblock %}</title>
+    
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet.js Map CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="main-header">
+        <div class="header-container">
+            <a href="/" class="logo">
+                <i class="fa-solid fa-volcano logo-icon"></i>
+                <span class="logo-text">Geo<span>Centro</span></span>
+            </a>
+            
+            <nav class="navbar">
+                <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="fa-solid fa-house"></i> Portada
+                </a>
+                <a href="/historical" class="nav-link {% if request.path == '/historical' %}active{% endif %}">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Historial
+                </a>
+                <a href="/tools" class="nav-link {% if request.path == '/tools' %}active{% endif %}">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> Herramientas
+                </a>
+            </nav>
+            
+            <div class="header-actions">
+                <button id="btn-sync" class="btn btn-sync" title="Actualizar datos desde INETER">
+                    <i class="fa-solid fa-rotate"></i> <span>Actualizar</span>
+                </button>
+            </div>
+            
+            <button class="mobile-menu-toggle" id="mobile-toggle">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-info">
+                <h3>GeoCentro</h3>
+                <p>Monitoreo geológico y sismológico en tiempo real para Centroamérica.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Fuentes Oficiales</h4>
+                <ul>
+                    <li><a href="https://www.ineter.gob.ni/" target="_blank"><i class="fa-solid fa-link"></i> INETER (Nicaragua)</a></li>
+                    <li><a href="https://insivumeh.gob.gt/" target="_blank"><i class="fa-solid fa-link"></i> INSIVUMEH (Guatemala)</a></li>
+                    <li><a href="https://www.ovsicori.una.ac.cr/" target="_blank"><i class="fa-solid fa-link"></i> OVSICORI (Costa Rica)</a></li>
+                    <li><a href="https://www.snet.gob.sv/" target="_blank"><i class="fa-solid fa-link"></i> SNET (El Salvador)</a></li>
+                </ul>
+            </div>
+            <div class="footer-copy">
+                <p>&copy; 2026 GeoCentro. Todos los derechos reservados. Datos servidos de forma autónoma.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Global Javascript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
