@@ -29,13 +29,13 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: Configuration and Daemon Setup' (Protocol in workflow.md)** [23d4c96]
 
 ## Phase 3: Scraping Automation and Final Verification
-- [~] **Task: Configurar Cron Job para automatización de Scraping**
+- [x] **Task: Configurar Cron Job para automatización de Scraping**
   - [x] Crear script de automatización `setup_cron.sh` para crontab.
-  - [ ] Ejecutar `setup_cron.sh` para registrar el cron job en el sistema.
-- [~] **Task: Pruebas de funcionamiento y verificación del sitio**
+  - [x] Ejecutar `setup_cron.sh` para registrar el cron job en el sistema.
+- [x] **Task: Pruebas de funcionamiento y verificación del sitio**
   - [x] Crear script `verify_all.sh` para comprobar servicios, logs y registros de base de datos.
-  - [ ] Ejecutar manualmente el scraper una vez desde el entorno virtual para verificar la conexión con INETER.
-  - [ ] Ejecutar `verify_all.sh` para confirmar que todo funciona correctamente.
+  - [x] Ejecutar manualmente el scraper una vez desde el entorno virtual para verificar la conexión con INETER.
+  - [x] Ejecutar `verify_all.sh` para confirmar que todo funciona correctamente.
 - [x] **Task: Configurar subdominio DNS en Coolify proxy** [274938e]
   - [x] Ejecutar `configure_subdomain.sh` para registrar el subdominio `geocentro.grupopy.me`.
   - [x] Verificar la resolución DNS y la accesibilidad HTTPS a `geocentro.grupopy.me`.

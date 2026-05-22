@@ -27,6 +27,18 @@ http:
         - https
       tls:
         certResolver: letsencrypt
+    geocentro-http-router:
+      rule: "Host(\`geocentro.grupopy.me\`)"
+      service: geocentro-service
+      entryPoints:
+        - http
+      middlewares:
+        - geocentro-redirect
+  middlewares:
+    geocentro-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
   services:
     geocentro-service:
       loadBalancer:
