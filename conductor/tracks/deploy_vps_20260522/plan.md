@@ -5,13 +5,13 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
 ---
 
 ## Phase 1: Environment and Files Preparation
-- [ ] **Task: Preparar entorno de sistema y dependencias**
-  - [ ] Instalar dependencias del sistema operativo (nginx, python3-pip, python3-venv, curl, git) si no están presentes.
-  - [ ] Crear el directorio `/var/www/geocentro` y asignar permisos al usuario actual (`root`).
-  - [ ] Copiar todos los archivos del proyecto desde el directorio de trabajo actual a `/var/www/geocentro`.
-  - [ ] Crear el entorno virtual de Python en `/var/www/geocentro/venv`.
-  - [ ] Actualizar `pip` e instalar dependencias del archivo `requirements.txt` en el entorno virtual.
-  - [ ] Instalar `gunicorn` en el entorno virtual.
+- [x] **Task: Preparar entorno de sistema y dependencias** [0c27a65]
+  - [x] Instalar dependencias del sistema operativo (nginx, python3-pip, python3-venv, curl, git) si no están presentes.
+  - [x] Crear el directorio `/var/www/geocentro` y asignar permisos al usuario actual (`root`).
+  - [x] Copiar todos los archivos del proyecto desde el directorio de trabajo actual a `/var/www/geocentro`.
+  - [x] Crear el entorno virtual de Python en `/var/www/geocentro/venv`.
+  - [x] Actualizar `pip` e instalar dependencias del archivo `requirements.txt` en el entorno virtual.
+  - [x] Instalar `gunicorn` en el entorno virtual.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1: Environment and Files Preparation' (Protocol in workflow.md)**
 
 ## Phase 2: Configuration and Daemon Setup
