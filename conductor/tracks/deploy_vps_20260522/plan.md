@@ -20,12 +20,12 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
   - [x] Recargar el daemon de Systemd (`systemctl daemon-reload`).
   - [x] Iniciar el servicio `geocentro.service` y habilitarlo para que inicie con el sistema.
   - [x] Verificar el estado de la aplicación mediante `systemctl status geocentro`.
-- [ ] **Task: Configurar Nginx como Proxy Inverso**
-  - [ ] Crear el archivo de configuración de Nginx `/etc/nginx/sites-available/geocentro` apuntando al puerto local 8000 y definiendo el alias para `/static/`.
-  - [ ] Habilitar el sitio mediante enlace simbólico a `/etc/nginx/sites-enabled/`.
-  - [ ] Deshabilitar el sitio predeterminado (default) de Nginx.
-  - [ ] Verificar la sintaxis de la configuración de Nginx (`nginx -t`).
-  - [ ] Reiniciar Nginx (`systemctl restart nginx`).
+- [x] **Task: Configurar Nginx como Proxy Inverso** [c5b7b9c]
+  - [x] Crear el archivo de configuración de Nginx `/etc/nginx/sites-available/geocentro` apuntando al puerto local 8000 y definiendo el alias para `/static/`.
+  - [x] Habilitar el sitio mediante enlace simbólico a `/etc/nginx/sites-enabled/`.
+  - [x] Deshabilitar el sitio predeterminado (default) de Nginx.
+  - [x] Verificar la sintaxis de la configuración de Nginx (`nginx -t`).
+  - [x] Reiniciar Nginx (`systemctl restart nginx`).
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: Configuration and Daemon Setup' (Protocol in workflow.md)**
 
 ## Phase 3: Scraping Automation and Final Verification
