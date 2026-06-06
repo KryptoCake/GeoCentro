@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Initialize Map
-    const map = L.map('main-map').setView([12.7, -86.2], 7);
+    // 1. Initialize Map centered on Central America to capture Guatemala, Nicaragua and Costa Rica
+    const map = L.map('main-map').setView([12.5, -87.5], 6);
     
     // Sleek CartoDB Dark Matter tiles
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -19,12 +19,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Volcanoes Data
     const volcanoes = [
-        { name: "Volcán San Cristóbal", lat: 12.7019, lon: -87.0039, height: "1,745 m", status: "Activo", webcam: "v_sancris2" },
-        { name: "Volcán Telica", lat: 12.6061, lon: -86.8400, height: "1,061 m", status: "Activo", webcam: "v_telica" },
-        { name: "Volcán Cerro Negro", lat: 12.5061, lon: -86.7019, height: "728 m", status: "Activo", webcam: null },
-        { name: "Volcán Momotombo", lat: 12.4231, lon: -86.5392, height: "1,297 m", status: "Activo", webcam: "v_momotombo" },
-        { name: "Volcán Masaya", lat: 11.9844, lon: -86.1689, height: "635 m", status: "Activo", webcam: "v_masaya" },
-        { name: "Volcán Concepción", lat: 11.5378, lon: -85.6222, height: "1,610 m", status: "Activo", webcam: null }
+        { name: "Volcán San Cristóbal", lat: 12.7019, lon: -87.0039, height: "1,745 m", status: "Activo", webcams: [{ code: "v_sancris2", label: "Cámara Principal" }] },
+        { name: "Volcán Telica", lat: 12.6061, lon: -86.8400, height: "1,061 m", status: "Activo", webcams: [{ code: "v_telica", label: "Cámara Principal" }] },
+        { name: "Volcán Cerro Negro", lat: 12.5061, lon: -86.7019, height: "728 m", status: "Activo", webcams: [] },
+        { name: "Volcán Momotombo", lat: 12.4231, lon: -86.5392, height: "1,297 m", status: "Activo", webcams: [{ code: "v_momotombo", label: "Cámara Principal" }] },
+        { name: "Volcán Masaya", lat: 11.9844, lon: -86.1689, height: "635 m", status: "Activo", webcams: [{ code: "v_masaya", label: "Cráter Principal" }, { code: "v_masaya4", label: "Sector Nindirí" }] },
+        { name: "Volcán Concepción", lat: 11.5378, lon: -85.6222, height: "1,610 m", status: "Activo", webcams: [{ code: "v_concepcion2", label: "Sector Concepción 2" }, { code: "v_concepcion3", label: "Sector Concepción 3" }] },
+        // Costa Rica Volcanoes
+        { name: "Volcán Poás", lat: 10.1983, lon: -84.2306, height: "2,708 m", status: "Activo", webcams: [{ code: "v_craterpoas", label: "Cráter Principal" }, { code: "v_chahuites", label: "Sector Chahuites" }] },
+        { name: "Volcán Rincón de la Vieja", lat: 10.8306, lon: -85.3242, height: "1,916 m", status: "Activo", webcams: [{ code: "v_curubande", label: "Sector Curubandé" }, { code: "v_rincon2", label: "Mirador Rincón" }] },
+        { name: "Volcán Irazú", lat: 9.9792, lon: -83.8525, height: "3,432 m", status: "Activo", webcams: [{ code: "v_irazu", label: "Cráter Principal" }] },
+        { name: "Volcán Turrialba", lat: 10.0250, lon: -83.7667, height: "3,340 m", status: "Activo", webcams: [{ code: "v_turrialba", label: "Cráter Principal" }] },
+        // Guatemala Volcanoes
+        { name: "Volcán de Fuego", lat: 14.4747, lon: -90.8808, height: "3,763 m", status: "Activo", webcams: [{ code: "v_fuego_so", label: "Flanco Suroeste" }, { code: "v_fuego_se", label: "Flanco Sureste" }, { code: "v_fuego_ceniza", label: "Barranca Ceniza" }] },
+        { name: "Volcán Santiaguito", lat: 14.7561, lon: -91.5519, height: "2,500 m", status: "Activo", webcams: [{ code: "v_santiaguito", label: "San Marcos Palajunoj" }] }
     ];
     
     // Add Volcano Markers
@@ -35,8 +43,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Altura:</strong> ${v.height}</p>
                 <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Estado:</strong> <span class="status-badge active" style="background: rgba(76, 175, 80, 0.15); color: #4caf50; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 0.75rem;">${v.status}</span></p>
         `;
-        if (v.webcam) {
-            popupContent += `<button class="btn btn-primary btn-sm btn-view-cam" data-cam="${v.webcam}" data-name="${v.name}" style="margin-top: 10px; width: 100%; border-radius: 6px; padding: 6px; cursor: pointer; font-size: 0.8rem;"><i class="fa-solid fa-camera"></i> Ver Cámara en Vivo</button>`;
+        if (v.webcams && v.webcams.length > 0) {
+            v.webcams.forEach(cam => {
+                popupContent += `<button class="btn btn-primary btn-sm btn-view-cam" data-cam="${cam.code}" data-name="${v.name} (${cam.label})" style="margin-top: 8px; width: 100%; border-radius: 6px; padding: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px;"><i class="fa-solid fa-camera"></i> Ver ${cam.label}</button>`;
+            });
         }
         popupContent += `</div>`;
         

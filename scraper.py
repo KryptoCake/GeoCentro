@@ -43,6 +43,190 @@ def get_country_from_desc(desc):
     else:
         return 'Otros'
 
+def scrape_ovsicori_recientes():
+    url = "https://www.ovsicori.una.ac.cr/sistemas/sentidos_map/indexleqs.php"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
+    print(f"[{datetime.now()}] Iniciando scraping de sismos recientes de OVSICORI desde: {url}")
+    new_count = 0
+    try:
+        response = requests.get(url, headers=headers, timeout=15, verify=False)
+        if response.status_code != 200:
+            print(f"Error al obtener página de OVSICORI recientes. Código: {response.status_code}")
+            return 0
+    except Exception as e:
+        print(f"Excepción al conectar con OVSICORI recientes: {e}")
+        return 0
+        
+    soup = BeautifulSoup(response.text, 'html.parser')
+    table = soup.find('table')
+    if not table:
+        print("No se encontró la tabla de sismos recientes de OVSICORI.")
+        return 0
+        
+    rows = table.find_all('tr')
+    for row in rows[1:]: # skip header
+        cells = row.find_all('td')
+        if len(cells) < 7:
+            continue
+            
+        # Headers: Fecha, Hora, Magnitud, Profundidad, Latitud, Longitud, Localizacion
+        fecha = cells[0].get_text(strip=True)
+        hora = cells[1].get_text(strip=True)
+        magnitud_str = cells[2].get_text(strip=True)
+        profundidad_str = cells[3].get_text(strip=True)
+        latitud_str = cells[4].get_text(strip=True)
+        longitud_str = cells[5].get_text(strip=True)
+        descripcion = cells[6].get_text(strip=True)
+        
+        try:
+            # Clean values
+            magnitud = float(magnitud_str)
+            profundidad = int(profundidad_str)
+            latitud = float(latitud_str)
+            longitud = float(longitud_str)
+            
+            try:
+                date_obj = datetime.strptime(fecha, '%Y-%m-%d')
+                fecha_formatted = date_obj.strftime('%Y-%m-%d')
+            except ValueError:
+                fecha_formatted = fecha
+                
+            country = get_country_from_desc(descripcion)
+            if country == 'Otros' or not country:
+                country = 'Costa Rica'
+                
+            inserted = database.save_sismo(
+                fecha_utc=fecha_formatted,
+                hora_utc=hora,
+                latitud=latitud,
+                longitud=longitud,
+                profundidad=profundidad,
+                magnitud=magnitud,
+                tipo='CR_REC',
+                descripcion=descripcion,
+                pais=country
+            )
+            
+            if inserted:
+                new_count += 1
+                if magnitud >= 4.0:
+                    alert_title = f"Sismo Reciente de magnitud {magnitud} en Costa Rica"
+                    if magnitud >= 5.0:
+                        alert_title = f"ALERTA: Sismo Fuerte de magnitud {magnitud} en Costa Rica"
+                        
+                    alert_desc = f"Un evento sísmico de magnitud {magnitud} Mw ocurrió el {fecha_formatted} a las {hora} (hora local/red), localizado a una profundidad de {profundidad} km. Referencia: {descripcion}."
+                    database.save_news(
+                        titulo=alert_title,
+                        url=f"#{fecha_formatted}_{hora.replace(':', '')}",
+                        fecha=fecha_formatted,
+                        resumen=alert_desc,
+                        pais=country
+                    )
+        except Exception as e:
+            # Silently ignore format parsing errors on malformed rows
+            pass
+            
+    print(f"Scraping de OVSICORI recientes finalizado. Se agregaron {new_count} nuevos sismos.")
+    return new_count
+
+def scrape_ovsicori_sentidos():
+    url = "https://www.ovsicori.una.ac.cr/sistemas/sentidos_map/index.php?tipo=center"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
+    print(f"[{datetime.now()}] Iniciando scraping de sismos sentidos de OVSICORI desde: {url}")
+    new_count = 0
+    try:
+        response = requests.get(url, headers=headers, timeout=15, verify=False)
+        if response.status_code != 200:
+            print(f"Error al obtener página de OVSICORI sentidos. Código: {response.status_code}")
+            return 0
+    except Exception as e:
+        print(f"Excepción al conectar con OVSICORI sentidos: {e}")
+        return 0
+        
+    soup = BeautifulSoup(response.text, 'html.parser')
+    table = soup.find('table')
+    if not table:
+        print("No se encontró la tabla de sismos sentidos de OVSICORI.")
+        return 0
+        
+    rows = table.find_all('tr')
+    for row in rows:
+        cells = row.find_all('td')
+        if len(cells) != 10:
+            continue
+            
+        # Headers: Fecha, Hora, Magnitud, Profundidad, Localizacion, Origen/Mecanismo, Reportado/Intensidad, Latitud, Longitud
+        fecha = cells[0].get_text(strip=True)
+        hora = cells[1].get_text(strip=True)
+        magnitud_str = cells[2].get_text(strip=True)
+        profundidad_str = cells[3].get_text(strip=True)
+        localizacion = cells[4].get_text(strip=True)
+        origen = cells[5].get_text(strip=True)
+        reportes = cells[6].get_text(strip=True)
+        latitud_str = cells[7].get_text(strip=True)
+        longitud_str = cells[8].get_text(strip=True)
+        
+        if fecha == "Fecha" or "Magnitud" in magnitud_str:
+            continue
+            
+        try:
+            # Clean values
+            magnitud = float(magnitud_str)
+            profundidad = int(profundidad_str)
+            latitud = float(latitud_str)
+            longitud = float(longitud_str)
+            
+            try:
+                date_obj = datetime.strptime(fecha, '%Y-%m-%d')
+                fecha_formatted = date_obj.strftime('%Y-%m-%d')
+            except ValueError:
+                fecha_formatted = fecha
+                
+            country = get_country_from_desc(localizacion)
+            if country == 'Otros' or not country:
+                country = 'Costa Rica'
+                
+            descripcion = f"{localizacion} (Origen: {origen}"
+            if reportes:
+                descripcion += f", Sentido en: {reportes}"
+            descripcion += ")"
+            
+            inserted = database.save_sismo(
+                fecha_utc=fecha_formatted,
+                hora_utc=hora,
+                latitud=latitud,
+                longitud=longitud,
+                profundidad=profundidad,
+                magnitud=magnitud,
+                tipo='CR_SEN',
+                descripcion=descripcion,
+                pais=country
+            )
+            
+            if inserted:
+                new_count += 1
+                alert_title = f"Sismo Sentido de magnitud {magnitud} en Costa Rica"
+                if magnitud >= 5.0:
+                    alert_title = f"ALERTA: Sismo Fuerte Sentido de magnitud {magnitud} en Costa Rica"
+                    
+                alert_desc = f"Sismo SENTIDO de magnitud {magnitud} Mw registrado el {fecha_formatted} a las {hora}. Referencia: {descripcion}."
+                database.save_news(
+                    titulo=alert_title,
+                    url=f"#{fecha_formatted}_{hora.replace(':', '')}",
+                    fecha=fecha_formatted,
+                    resumen=alert_desc,
+                    pais=country
+                )
+        except Exception as e:
+            pass
+            
+    print(f"Scraping de OVSICORI sentidos finalizado. Se agregaron {new_count} nuevos sismos.")
+    return new_count
+
 def scrape_sismos():
     url = "https://webserver2.ineter.gob.ni/geofisica/sis/events/sismos.php"
     headers = {
@@ -125,7 +309,18 @@ def scrape_sismos():
                             pais=country
                         )
                         
-    print(f"Scraping finalizado. Se agregaron {new_sismos_count} nuevos sismos.")
+    # Now scrape Costa Rica sismos
+    try:
+        new_sismos_count += scrape_ovsicori_recientes()
+    except Exception as e:
+        print(f"Error en scrape_ovsicori_recientes: {e}")
+        
+    try:
+        new_sismos_count += scrape_ovsicori_sentidos()
+    except Exception as e:
+        print(f"Error en scrape_ovsicori_sentidos: {e}")
+
+    print(f"Scraping total finalizado. Se agregaron {new_sismos_count} nuevos sismos.")
     return new_sismos_count
 
 def seed_initial_news():

@@ -147,7 +147,7 @@
         <div class="card-header webcam-header">
             <div>
                 <h2><i class="fa-solid fa-camera"></i> Cámaras Web de Volcanes en Vivo</h2>
-                <p>Monitoreo visual continuo de los principales conos activos de Nicaragua a través de la red INETER.</p>
+                <p>Monitoreo visual continuo de los principales conos activos de Nicaragua, Costa Rica y Guatemala a través de redes científicas oficiales.</p>
             </div>
             <div class="webcam-controls">
                 <label class="switch-container">
@@ -159,16 +159,29 @@
         </div>
         
         <div class="webcams-grid">
-            <!-- Volcán Masaya -->
+            <!-- Volcán Masaya - Cráter Principal -->
             <div class="webcam-card-item">
-                <div class="webcam-title">Volcán Masaya</div>
+                <div class="webcam-title">Volcán Masaya - Cráter</div>
                 <div class="webcam-img-box">
-                    <img id="webcam-masaya" class="webcam-feed" src="/api/webcam/proxy?volcan=v_masaya" alt="Cámara Volcán Masaya">
+                    <img id="webcam-masaya" class="webcam-feed" src="/api/webcam/proxy?volcan=v_masaya" alt="Cámara Volcán Masaya Cráter">
                     <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
                 </div>
                 <div class="webcam-footer">
                     <span class="webcam-timestamp">Actualizando...</span>
                     <button class="btn btn-icon btn-refresh-cam" data-cam="v_masaya"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+            
+            <!-- Volcán Masaya - Sector Nindirí -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Masaya - Sector Nindirí</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-masaya-nindiri" class="webcam-feed" src="/api/webcam/proxy?volcan=v_masaya4" alt="Cámara Volcán Masaya Nindirí">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_masaya4"><i class="fa-solid fa-arrows-rotate"></i></button>
                 </div>
             </div>
             
@@ -208,6 +221,162 @@
                 <div class="webcam-footer">
                     <span class="webcam-timestamp">Actualizando...</span>
                     <button class="btn btn-icon btn-refresh-cam" data-cam="v_telica"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+
+            <!-- Volcán Concepción - Sector 2 -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Concepción - Sector 2</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-concepcion2" class="webcam-feed" src="/api/webcam/proxy?volcan=v_concepcion2" alt="Cámara Volcán Concepción Sector 2">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_concepcion2"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+
+            <!-- Volcán Concepción - Sector 3 -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Concepción - Sector 3</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-concepcion3" class="webcam-feed" src="/api/webcam/proxy?volcan=v_concepcion3" alt="Cámara Volcán Concepción Sector 3">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_concepcion3"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+
+            <!-- Volcán Poás - Cráter -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Poás - Cráter</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-poas-crater" class="webcam-feed" src="/api/webcam/proxy?volcan=v_craterpoas" alt="Cámara Volcán Poás Cráter">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_craterpoas"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+            
+            <!-- Volcán Poás - Chahuites -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Poás - Sector Chahuites</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-poas-chahuites" class="webcam-feed" src="/api/webcam/proxy?volcan=v_chahuites" alt="Cámara Volcán Poás Chahuites">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_chahuites"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+            
+            <!-- Volcán Rincón de la Vieja - Curubandé -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">V. Rincón de la Vieja - Curubandé</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-rincon-curubande" class="webcam-feed" src="/api/webcam/proxy?volcan=v_curubande" alt="Cámara Volcán Rincón de la Vieja Curubandé">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_curubande"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+            
+            <!-- Volcán Rincón de la Vieja - Mirador -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">V. Rincón de la Vieja - Sector 2</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-rincon-sector2" class="webcam-feed" src="/api/webcam/proxy?volcan=v_rincon2" alt="Cámara Volcán Rincón de la Vieja Sector 2">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_rincon2"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+            
+            <!-- Volcán Irazú -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Irazú</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-irazu" class="webcam-feed" src="/api/webcam/proxy?volcan=v_irazu" alt="Cámara Volcán Irazú">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_irazu"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+
+            <!-- Volcán Turrialba -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Turrialba</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-turrialba" class="webcam-feed" src="/api/webcam/proxy?volcan=v_turrialba" alt="Cámara Volcán Turrialba">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_turrialba"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+
+            <!-- Volcán de Fuego - Flanco Suroeste -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán de Fuego - Suroeste</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-fuego-so" class="webcam-feed" src="/api/webcam/proxy?volcan=v_fuego_so" alt="Cámara Volcán de Fuego Suroeste">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_fuego_so"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+
+            <!-- Volcán de Fuego - Flanco Sureste -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán de Fuego - Sureste</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-fuego-se" class="webcam-feed" src="/api/webcam/proxy?volcan=v_fuego_se" alt="Cámara Volcán de Fuego Sureste">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_fuego_se"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+
+            <!-- Volcán de Fuego - Barranca Ceniza -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán de Fuego - Ceniza</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-fuego-ceniza" class="webcam-feed" src="/api/webcam/proxy?volcan=v_fuego_ceniza" alt="Cámara Volcán de Fuego Barranca Ceniza">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_fuego_ceniza"><i class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+
+            <!-- Volcán Santiaguito - San Marcos Palajunoj -->
+            <div class="webcam-card-item">
+                <div class="webcam-title">Volcán Santiaguito</div>
+                <div class="webcam-img-box">
+                    <img id="webcam-santiaguito" class="webcam-feed" src="/api/webcam/proxy?volcan=v_santiaguito" alt="Cámara Volcán Santiaguito San Marcos Palajunoj">
+                    <div class="webcam-overlay"><span class="badge-live">EN VIVO</span></div>
+                </div>
+                <div class="webcam-footer">
+                    <span class="webcam-timestamp">Actualizando...</span>
+                    <button class="btn btn-icon btn-refresh-cam" data-cam="v_santiaguito"><i class="fa-solid fa-arrows-rotate"></i></button>
                 </div>
             </div>
         </div>

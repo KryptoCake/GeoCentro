@@ -82,7 +82,20 @@ def webcam_proxy():
         'v_sancris2': 'https://webserver2.ineter.gob.ni/webcam/v_sancris2/image.jpg',
         'v_masaya': 'https://webserver2.ineter.gob.ni/webcam/v_masaya/image.jpg',
         'v_momotombo': 'https://webserver2.ineter.gob.ni/webcam/v_momotombo/image.jpg',
-        'v_telica': 'https://webserver2.ineter.gob.ni/webcam/v_telica/image.jpg'
+        'v_telica': 'https://webserver2.ineter.gob.ni/webcam/v_telica/image.jpg',
+        'v_craterpoas': 'https://www.ovsicori.una.ac.cr/images/stories/camaras/livecraterpoas/camara.jpg',
+        'v_chahuites': 'https://www.ovsicori.una.ac.cr/images/stories/camaras/livechahuites/camara.jpg',
+        'v_curubande': 'https://www.ovsicori.una.ac.cr/images/stories/camaras/livecurubande/camara.jpg',
+        'v_rincon2': 'https://www.ovsicori.una.ac.cr/images/stories/camaras/liverincon2/camara.jpg',
+        'v_irazu': 'https://www.ovsicori.una.ac.cr/images/stories/camaras/liveirazu/camara.jpg',
+        'v_concepcion2': 'https://webserver2.ineter.gob.ni/webcam/v_concepcion2/image.jpg',
+        'v_concepcion3': 'https://webserver2.ineter.gob.ni/webcam/v_concepcion3/image.jpg',
+        'v_masaya4': 'https://webserver2.ineter.gob.ni/webcam/v_masaya4/image.jpg',
+        'v_turrialba': 'https://www.ovsicori.una.ac.cr/images/stories/camaras/liveturrialba/camara.jpg',
+        'v_fuego_so': 'https://geo.insivumeh.gob.gt/fg8',
+        'v_fuego_se': 'https://geo.insivumeh.gob.gt/fg12',
+        'v_fuego_ceniza': 'https://geo.insivumeh.gob.gt/fg14',
+        'v_santiaguito': 'https://geo.insivumeh.gob.gt/stpj'
     }
     
     if volcan not in allowed_volcanoes:
