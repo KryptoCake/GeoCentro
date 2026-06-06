@@ -28,7 +28,7 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
   - [x] Reiniciar Nginx (`systemctl restart nginx`).
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: Configuration and Daemon Setup' (Protocol in workflow.md)** [23d4c96]
 
-## Phase 3: Scraping Automation and Final Verification
+## Phase 3: Scraping Automation and Final Verification [checkpoint: f47a575]
 - [x] **Task: Configurar Cron Job para automatización de Scraping**
   - [x] Crear script de automatización `setup_cron.sh` para crontab.
   - [x] Ejecutar `setup_cron.sh` para registrar el cron job en el sistema.
