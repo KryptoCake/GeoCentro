@@ -21,7 +21,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.1">
 </head>
 <body>
     <!-- Top Navigation Header -->
@@ -84,7 +84,7 @@
     </footer>
 
     <!-- Global Javascript -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=1.0.1"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
