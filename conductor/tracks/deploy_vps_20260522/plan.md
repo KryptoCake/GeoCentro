@@ -39,4 +39,4 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
 - [x] **Task: Configurar subdominio DNS en Coolify proxy** [274938e]
   - [x] Ejecutar `configure_subdomain.sh` para registrar el subdominio `geocentro.grupopy.me`.
   - [x] Verificar la resolución DNS y la accesibilidad HTTPS a `geocentro.grupopy.me`.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Scraping Automation and Final Verification' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Scraping Automation and Final Verification' (Protocol in workflow.md)** [f917e8a]
