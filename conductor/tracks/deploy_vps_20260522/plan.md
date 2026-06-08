@@ -28,7 +28,7 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
   - [x] Reiniciar Nginx (`systemctl restart nginx`).
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: Configuration and Daemon Setup' (Protocol in workflow.md)** [23d4c96]
 
-## Phase 3: Scraping Automation and Final Verification [checkpoint: f47a575]
+## Phase 3: Scraping Automation and Final Verification [checkpoint: 9b7f2fc]
 - [x] **Task: Configurar Cron Job para automatización de Scraping**
   - [x] Crear script de automatización `setup_cron.sh` para crontab.
   - [x] Ejecutar `setup_cron.sh` para registrar el cron job en el sistema.
@@ -39,4 +39,4 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
 - [x] **Task: Configurar subdominio DNS en Coolify proxy** [274938e]
   - [x] Ejecutar `configure_subdomain.sh` para registrar el subdominio `geocentro.grupopy.me`.
   - [x] Verificar la resolución DNS y la accesibilidad HTTPS a `geocentro.grupopy.me`.
-- [x] **Task: Conductor - User Manual Verification 'Phase 3: Scraping Automation and Final Verification' (Protocol in workflow.md)** [f917e8a]
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Scraping Automation and Final Verification' (Protocol in workflow.md)** [9b7f2fc]

@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Deploy website on Hostinger VPS**
+- [x] **Track: Deploy website on Hostinger VPS** [checkpoint: 9b7f2fc]
   *Link: [./tracks/deploy_vps_20260522/](./tracks/deploy_vps_20260522/)*
