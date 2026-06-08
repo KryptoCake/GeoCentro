@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let filteredSismos = [];
     let currentPage = 1;
     const pageSize = 15;
+    let currentSource = 'locales'; // 'locales' or 'usgs'
     
     let timelineChart = null;
     let magnitudeChart = null;
@@ -76,7 +77,9 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
         
-        fetch('/api/sismos?limit=1000')
+        const endpoint = (currentSource === 'locales') ? '/api/sismos?limit=1000' : '/api/sismos/usgs?limit=1000';
+        
+        fetch(endpoint)
             .then(res => res.json())
             .then(data => {
                 allSismos = data;
@@ -108,7 +111,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         filteredSismos = allSismos.filter(s => {
             // Country Filter
-            if (country && s.pais !== country) return false;
+            if (country) {
+                if (country === 'Otros') {
+                    const centralAmericanCountries = ['Nicaragua', 'El Salvador', 'Guatemala', 'Honduras', 'Costa Rica', 'Panamá', 'Panama'];
+                    if (centralAmericanCountries.includes(s.pais)) return false;
+                } else if (s.pais !== country) {
+                    return false;
+                }
+            }
 
             // Magnitude Filter (if slider is at 1.0, ignore magnitude filter to allow all sismos)
             if (minMag > 1.0 && s.magnitud < minMag) return false;
@@ -419,10 +429,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Historical Table Tabs Logic
+    const tabTableLocales = document.getElementById('table-tab-locales');
+    const tabTableUsgs = document.getElementById('table-tab-usgs');
+    
+    if (tabTableLocales && tabTableUsgs) {
+        tabTableLocales.addEventListener('click', function() {
+            if (currentSource !== 'locales') {
+                currentSource = 'locales';
+                tabTableLocales.classList.add('active');
+                tabTableUsgs.classList.remove('active');
+                fetchData();
+            }
+        });
+        
+        tabTableUsgs.addEventListener('click', function() {
+            if (currentSource !== 'usgs') {
+                currentSource = 'usgs';
+                tabTableUsgs.classList.add('active');
+                tabTableLocales.classList.remove('active');
+                fetchData();
+            }
+        });
+    }
+    
     // Setup sync reload callback
     window.refreshHistoricalData = function() {
         fetchData();
     };
+    
+    // Parse URL query parameters to filter country on load
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPais = urlParams.get('pais');
+    if (urlPais && countrySelect) {
+        // If the country is "Otros", we also switch tab to USGS (Global)
+        if (urlPais === 'Otros') {
+            currentSource = 'usgs';
+            const tabTableLocales = document.getElementById('table-tab-locales');
+            const tabTableUsgs = document.getElementById('table-tab-usgs');
+            if (tabTableLocales && tabTableUsgs) {
+                tabTableUsgs.classList.add('active');
+                tabTableLocales.classList.remove('active');
+            }
+        }
+        countrySelect.value = urlPais;
+    }
     
     // Trigger initial load
     fetchData();

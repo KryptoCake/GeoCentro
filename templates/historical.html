@@ -80,8 +80,14 @@
             
             <!-- Data Table Section -->
             <div class="table-card card">
-                <div class="table-header">
-                    <h3>Registro de Eventos</h3>
+                <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        <h3 style="margin: 0;">Registro de Eventos</h3>
+                        <div class="table-tabs" style="display: flex; gap: 4px; background: rgba(0,0,0,0.25); padding: 3px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <button class="table-tab-btn active" id="table-tab-locales" style="padding: 4px 12px; border-radius: 6px; border: none; background: transparent; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition);">Locales</button>
+                            <button class="table-tab-btn" id="table-tab-usgs" style="padding: 4px 12px; border-radius: 6px; border: none; background: transparent; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition);">USGS (Global)</button>
+                        </div>
+                    </div>
                     <button class="btn btn-outline" id="btn-export-csv"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
                 </div>
                 

@@ -609,6 +609,14 @@ button {
     border-radius: 12px;
     margin-top: 10px;
     font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+    cursor: pointer;
+}
+.news-item-country-badge:hover {
+    background: rgba(0, 188, 212, 0.25);
+    border-color: rgba(0, 188, 212, 0.4);
+    transform: translateY(-1px);
 }
 
 /* Volcano Tourism */
@@ -1364,4 +1372,113 @@ button {
     #main-map {
         height: 380px;
     }
+}
+
+/* Custom Tabs for Side Panel and Historical Table */
+.tab-btn, .table-tab-btn {
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.tab-btn:hover, .table-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.tab-btn.active, .table-tab-btn.active {
+    background: rgba(255, 87, 34, 0.15) !important;
+    color: var(--text-primary) !important;
+    border-color: rgba(255, 87, 34, 0.4) !important;
+}
+
+/* Custom Leaflet Layer Control Styles to fit dark glassmorphism design */
+.leaflet-control-layers {
+    background: rgba(20, 21, 28, 0.85) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-main) !important;
+    font-size: 0.85rem !important;
+    box-shadow: var(--shadow) !important;
+    padding: 10px 14px !important;
+    transition: var(--transition);
+}
+
+.leaflet-control-layers:hover {
+    border-color: var(--border-color-hover) !important;
+}
+
+.leaflet-control-layers-list label {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.leaflet-control-layers-list label:last-child {
+    margin-bottom: 0;
+}
+
+.leaflet-control-layers-list input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+.leaflet-control-layers-separator {
+    border-top: 1px solid var(--border-color) !important;
+    margin: 8px 0 !important;
+}
+
+/* Windy Layer Selector Tabs */
+.windy-tab-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.windy-tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.windy-tab-btn.active {
+    background: rgba(0, 188, 212, 0.15) !important;
+    color: var(--info) !important;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 188, 212, 0.3) !important;
+}
+
+/* Weather Extremes Widget Styles */
+.weather-extremes-card {
+    background: rgba(20, 21, 28, 0.7);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+.weather-extremes-card:hover {
+    border-color: rgba(255, 87, 34, 0.2) !important;
+}
+
+.extreme-item {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.extreme-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--border-color-hover);
 }

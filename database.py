@@ -40,7 +40,36 @@ def init_db():
             fecha TEXT NOT NULL,
             resumen TEXT,
             pais TEXT NOT NULL,
+            categoria TEXT DEFAULT 'general',
             hash_id TEXT UNIQUE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Run migration to add 'categoria' column to 'news' table if it does not exist
+    cursor.execute("PRAGMA table_info(news)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if 'categoria' not in columns:
+        cursor.execute("ALTER TABLE news ADD COLUMN categoria TEXT DEFAULT 'general'")
+    
+    # Clean up old weather alerts that have invalid, empty, or relative URLs
+    cursor.execute("DELETE FROM news WHERE categoria = 'clima' AND (url IS NULL OR url = '' OR url = '#' OR url LIKE '#%' OR url NOT LIKE 'http%')")
+    
+    # Create sismos_usgs table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sismos_usgs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usgs_id TEXT UNIQUE NOT NULL,
+            fecha_utc TEXT NOT NULL,
+            hora_utc TEXT NOT NULL,
+            latitud REAL NOT NULL,
+            longitud REAL NOT NULL,
+            profundidad REAL NOT NULL,
+            magnitud REAL NOT NULL,
+            tipo_magnitud TEXT,
+            descripcion TEXT NOT NULL,
+            pais TEXT NOT NULL,
+            url TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -76,16 +105,16 @@ def save_sismo(fecha_utc, hora_utc, latitud, longitud, profundidad, magnitud, ti
         conn.close()
     return inserted
 
-def save_news(titulo, url, fecha, resumen, pais):
+def save_news(titulo, url, fecha, resumen, pais, categoria='general'):
     hash_id = generate_news_hash(titulo, url)
     conn = get_db_connection()
     cursor = conn.cursor()
     inserted = False
     try:
         cursor.execute('''
-            INSERT INTO news (titulo, url, fecha, resumen, pais, hash_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (titulo, url, fecha, resumen, pais, hash_id))
+            INSERT INTO news (titulo, url, fecha, resumen, pais, categoria, hash_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (titulo, url, fecha, resumen, pais, categoria, hash_id))
         conn.commit()
         inserted = True
     except sqlite3.IntegrityError:
@@ -140,10 +169,13 @@ def get_sismos(filters=None, limit=200):
     
     return [dict(row) for row in rows]
 
-def get_news(limit=10):
+def get_news(limit=10, categoria=None):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM news ORDER BY fecha DESC, created_at DESC LIMIT ?", (limit,))
+    if categoria:
+        cursor.execute("SELECT * FROM news WHERE categoria = ? ORDER BY fecha DESC, created_at DESC LIMIT ?", (categoria, limit))
+    else:
+        cursor.execute("SELECT * FROM news ORDER BY fecha DESC, created_at DESC LIMIT ?", (limit,))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
@@ -210,3 +242,69 @@ def get_stats():
     
     conn.close()
     return stats
+
+def save_sismo_usgs(usgs_id, fecha_utc, hora_utc, latitud, longitud, profundidad, magnitud, tipo_magnitud, descripcion, pais, url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    inserted = False
+    try:
+        cursor.execute('''
+            INSERT INTO sismos_usgs (usgs_id, fecha_utc, hora_utc, latitud, longitud, profundidad, magnitud, tipo_magnitud, descripcion, pais, url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (usgs_id, fecha_utc, hora_utc, latitud, longitud, profundidad, magnitud, tipo_magnitud, descripcion, pais, url))
+        conn.commit()
+        inserted = True
+    except sqlite3.IntegrityError:
+        inserted = False
+    finally:
+        conn.close()
+    return inserted
+
+def get_sismos_usgs(filters=None, limit=200):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    query = "SELECT * FROM sismos_usgs"
+    params = []
+    
+    if filters:
+        where_clauses = []
+        if 'pais' in filters and filters['pais']:
+            if filters['pais'] == 'Otros':
+                where_clauses.append("pais NOT IN ('Nicaragua', 'El Salvador', 'Guatemala', 'Honduras', 'Costa Rica')")
+            else:
+                where_clauses.append("pais = ?")
+                params.append(filters['pais'])
+        if 'min_magnitud' in filters and filters['min_magnitud'] is not None:
+            where_clauses.append("magnitud >= ?")
+            params.append(float(filters['min_magnitud']))
+        if 'max_magnitud' in filters and filters['max_magnitud'] is not None:
+            where_clauses.append("magnitud <= ?")
+            params.append(float(filters['max_magnitud']))
+        if 'profundidad_min' in filters and filters['profundidad_min'] is not None:
+            where_clauses.append("profundidad >= ?")
+            params.append(int(filters['profundidad_min']))
+        if 'profundidad_max' in filters and filters['profundidad_max'] is not None:
+            where_clauses.append("profundidad <= ?")
+            params.append(int(filters['profundidad_max']))
+        if 'fecha_inicio' in filters and filters['fecha_inicio']:
+            where_clauses.append("fecha_utc >= ?")
+            params.append(filters['fecha_inicio'])
+        if 'fecha_fin' in filters and filters['fecha_fin']:
+            where_clauses.append("fecha_utc <= ?")
+            params.append(filters['fecha_fin'])
+        if 'buscar' in filters and filters['buscar']:
+            where_clauses.append("descripcion LIKE ?")
+            params.append(f"%{filters['buscar']}%")
+            
+        if where_clauses:
+            query += " WHERE " + " AND ".join(where_clauses)
+            
+    query += " ORDER BY fecha_utc DESC, hora_utc DESC LIMIT ?"
+    params.append(limit)
+    
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+    
+    return [dict(row) for row in rows]

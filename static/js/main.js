@@ -86,13 +86,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.forEach(item => {
                     const card = document.createElement('div');
                     card.className = 'news-card-item';
+                    const countryUrl = `/historical?pais=${encodeURIComponent(item.pais)}`;
                     card.innerHTML = `
                         <div class="news-item-header">
                             <h4 class="news-item-title">${item.titulo}</h4>
                             <span class="news-item-date">${item.fecha}</span>
                         </div>
                         <p class="news-item-desc">${item.resumen}</p>
-                        <span class="news-item-country-badge">${item.pais}</span>
+                        <a href="${countryUrl}" class="news-item-country-badge" style="text-decoration: none; cursor: pointer;">${item.pais}</a>
                     `;
                     newsContainer.appendChild(card);
                 });

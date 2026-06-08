@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Monitoreo Climático y Alertas{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero">
+    <div class="hero-text">
+        <h1><i class="fa-solid fa-cloud-sun-rain" style="color: var(--info);"></i> Observatorio y Monitoreo Climático</h1>
+        <p>Simulaciones en tiempo real y alertas de ciclones en Centroamérica</p>
+    </div>
+</div>
+
+<!-- Map and Live Capitals Grid -->
+<section class="map-section-container">
+    <div class="map-layout-grid">
+        <!-- Windy Map Card -->
+        <div class="map-card card" style="display: flex; flex-direction: column; gap: 12px; padding: 16px;">
+            <div class="map-header-tabs" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 4px;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin: 0;"><i class="fa-solid fa-wind" style="color: var(--info);"></i> Simulación Climática (Windy)</h3>
+                
+                <div class="windy-tabs" style="display: flex; gap: 4px; background: rgba(0,0,0,0.25); padding: 3px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <button class="windy-tab-btn active" data-overlay="wind" style="padding: 4px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition);">Viento</button>
+                    <button class="windy-tab-btn" data-overlay="rain" style="padding: 4px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition);">Lluvia / Radar</button>
+                    <button class="windy-tab-btn" data-overlay="temp" style="padding: 4px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition);">Temperatura</button>
+                    <button class="windy-tab-btn" data-overlay="waves" style="padding: 4px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition);">Oleaje</button>
+                    <button class="windy-tab-btn" data-overlay="clouds" style="padding: 4px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition);">Nubes</button>
+                </div>
+            </div>
+            
+            <div style="position: relative; flex: 1; border-radius: calc(var(--radius-md) - 4px); overflow: hidden; border: 1px solid var(--border-color);">
+                <iframe id="windy-iframe" src="https://embed.windy.com/embed2.html?lat=12.5&lon=-86.0&zoom=6&level=surface&overlay=wind&menu=&message=true&marker=&calendar=&pressure=&type=map&location=coordinates&metricWind=default&metricTemp=default&radarRange=-1" width="100%" height="520" frameborder="0" style="display: block;"></iframe>
+            </div>
+        </div>
+        
+        <!-- Live Capitals Sidebar -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Extremes Widget -->
+            <div class="card weather-extremes-card" style="padding: 16px;">
+                <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;"><i class="fa-solid fa-temperature-arrow-up" style="color: var(--accent);"></i> Extremos de Hoy</h3>
+                <div class="extremes-grid" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="extreme-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;">
+                        <span style="color: var(--text-secondary);"><i class="fa-solid fa-temperature-high" style="color: var(--danger); margin-right: 5px;"></i> Más Cálida:</span>
+                        <strong id="extreme-hottest" style="color: var(--text-primary); text-align: right;">Cargando...</strong>
+                    </div>
+                    <div class="extreme-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;">
+                        <span style="color: var(--text-secondary);"><i class="fa-solid fa-temperature-low" style="color: var(--info); margin-right: 5px;"></i> Más Fresca:</span>
+                        <strong id="extreme-coldest" style="color: var(--text-primary); text-align: right;">Cargando...</strong>
+                    </div>
+                    <div class="extreme-item" style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;">
+                        <span style="color: var(--text-secondary);"><i class="fa-solid fa-wind" style="color: var(--warning); margin-right: 5px;"></i> Más Ventosa:</span>
+                        <strong id="extreme-windiest" style="color: var(--text-primary); text-align: right;">Cargando...</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Capital List Panel -->
+            <div class="recent-sismos-panel card" style="max-height: 380px; padding: 20px;">
+                <div class="panel-header" style="margin-bottom: 12px; padding-bottom: 8px;">
+                    <h3 style="font-size: 1.05rem; font-weight: 700;">Capitales de Centroamérica</h3>
+                </div>
+                <div class="sismos-list-scroll" id="capitals-weather-list" style="gap: 8px;">
+                    <!-- Javascript will load capital weather items here -->
+                    <div class="loading-placeholder">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Cargando clima...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Alerts & Recommendations Grid -->
+<div class="news-tourism-grid" style="margin-bottom: 40px;">
+    <!-- NOAA/NHC Alerts Column -->
+    <section class="news-section card">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-triangle-exclamation" style="color: var(--warning);"></i> Alertas Tropicales Oficiales (NHC)</h2>
+        </div>
+        <div class="news-feed" id="weather-alerts-feed">
+            <div class="loading-placeholder">
+                <i class="fa-solid fa-spinner fa-spin"></i> Cargando boletines...
+            </div>
+        </div>
+    </section>
+    
+    <!-- Preparedness Column -->
+    <section class="tourism-section card">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-shield-halved" style="color: var(--success);"></i> Prevención y Preparación</h2>
+        </div>
+        <div class="tourism-grid">
+            <div class="tourism-card" style="padding: 16px; background: rgba(76, 175, 80, 0.05); border-left: 4px solid var(--success);">
+                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                    <div style="font-size: 1.8rem; color: var(--success);"><i class="fa-solid fa-kit-medical"></i></div>
+                    <div>
+                        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">Mochila de Emergencia</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin: 0;">Prepare suministros para al menos 72 horas: agua embotellada, alimentos no perecederos, linterna, radio a pilas, botiquín de primeros auxilios y copias de documentos importantes.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="tourism-card" style="padding: 16px; background: rgba(33, 150, 243, 0.05); border-left: 4px solid var(--info);">
+                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                    <div style="font-size: 1.8rem; color: var(--info);"><i class="fa-solid fa-house-chimney-user"></i></div>
+                    <div>
+                        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">Plan Familiar ante Lluvias</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin: 0;">Identifique las rutas de evacuación locales y los refugios temporales más cercanos. Nunca intente cruzar ríos, quebradas o calles inundadas a pie o en vehículo.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="tourism-card" style="padding: 16px; background: rgba(255, 179, 0, 0.05); border-left: 4px solid var(--warning);">
+                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                    <div style="font-size: 1.8rem; color: var(--warning);"><i class="fa-solid fa-circle-exclamation"></i></div>
+                    <div>
+                        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">Monitoreo de Pendientes</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin: 0;">Si vive cerca de colinas o zonas montañosas, esté atento a grietas en el suelo, inclinación de postes/árboles o flujos repentinos de agua lodosa, que indican riesgo inminente de deslave.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/clima.js') }}"></script>
+{% endblock %}

@@ -8,6 +8,19 @@ document.addEventListener('DOMContentLoaded', function() {
         subdomains: 'abcd',
         maxZoom: 19
     }).addTo(map);
+
+    // Initialize LayerGroups and add them to the map
+    const localSismosLayer = L.layerGroup().addTo(map);
+    const usgsSismosLayer = L.layerGroup().addTo(map);
+    const volcanoesLayer = L.layerGroup().addTo(map);
+    
+    // Add Layer Control to the map
+    const overlayMaps = {
+        "Sismos Locales (INETER/OVSICORI)": localSismosLayer,
+        "Sismos Globales (USGS)": usgsSismosLayer,
+        "Volcanes Activos": volcanoesLayer
+    };
+    L.control.layers(null, overlayMaps, { position: 'topright' }).addTo(map);
     
     // Volcano Icons (Pulsing Div Icon)
     const volcanoIcon = L.divIcon({
@@ -52,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         L.marker([v.lat, v.lon], { icon: volcanoIcon })
             .bindPopup(popupContent)
-            .addTo(map);
+            .addTo(volcanoesLayer);
     });
     
     // Webcam Modal DOM Elements
@@ -107,95 +120,167 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Sismos marker layers
-    let sismoMarkers = [];
+    // Sismos marker layers references
+    let localMarkers = [];
+    let usgsMarkers = [];
+    
+    // In-memory data store
+    let localSismos = [];
+    let usgsSismos = [];
+    let activeTab = 'locales'; // 'locales' or 'usgs'
     
     // Fetch and draw recent sismos
     function loadSismosData() {
-        // Fetch last 100 sismos
-        fetch('/api/sismos?limit=100')
-            .then(res => res.json())
-            .then(data => {
-                // Clear existing sismo markers
-                sismoMarkers.forEach(m => map.removeLayer(m));
-                sismoMarkers = [];
+        const listContainer = document.getElementById('recent-sismos-list');
+        if (listContainer) {
+            listContainer.innerHTML = `
+                <div class="loading-placeholder">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Cargando eventos...
+                </div>
+            `;
+        }
+
+        const fetchLocal = fetch('/api/sismos?limit=100').then(res => res.json());
+        const fetchUsgs = fetch('/api/sismos/usgs?limit=100').then(res => res.json());
+        
+        Promise.all([fetchLocal, fetchUsgs])
+            .then(([localData, usgsData]) => {
+                localSismos = localData;
+                usgsSismos = usgsData;
                 
-                // Update stats
-                updateStats(data);
+                // Clear and render local markers
+                localMarkers.forEach(m => localSismosLayer.removeLayer(m));
+                localMarkers = [];
+                renderLocalMarkers(localSismos);
                 
-                // Populate List
-                populateRecentList(data);
+                // Clear and render USGS markers
+                usgsMarkers.forEach(m => usgsSismosLayer.removeLayer(m));
+                usgsMarkers = [];
+                renderUsgsMarkers(usgsSismos);
                 
-                // Add Markers to Map
-                data.forEach((s) => {
-                    const lat = s.latitud;
-                    const lon = s.longitud;
-                    const mag = s.magnitud;
-                    const depth = s.profundidad;
-                    
-                    // Determine color
-                    let markerColor = '#4caf50'; // Low
-                    let markerClass = 'mag-low';
-                    if (mag >= 3.0 && mag < 5.0) {
-                        markerColor = '#ffb300'; // Med
-                        markerClass = 'mag-med';
-                    } else if (mag >= 5.0) {
-                        markerColor = '#f44336'; // High
-                        markerClass = 'mag-high';
-                    }
-                    
-                    // Radius size scales with magnitude
-                    const radiusSize = Math.max(mag * 3.5, 6);
-                    
-                    const popupHTML = `
-                        <div class="map-popup sismo-popup" style="color: #111827; font-family: 'Outfit', sans-serif;">
-                            <div class="popup-mag-badge ${markerClass}" style="font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; display: inline-block;">Mw ${mag.toFixed(1)}</div>
-                            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; color: #111827;">${s.descripcion}</h4>
-                            <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Fecha (UTC):</strong> ${s.fecha_utc}</p>
-                            <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Hora (UTC):</strong> ${s.hora_utc}</p>
-                            <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Profundidad:</strong> ${depth} km</p>
-                            <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Coordenadas:</strong> ${lat.toFixed(3)}, ${lon.toFixed(3)}</p>
-                        </div>
-                    `;
-                    
-                    const marker = L.circleMarker([lat, lon], {
-                        radius: radiusSize,
-                        fillColor: markerColor,
-                        color: markerColor,
-                        weight: 1.5,
-                        opacity: 0.9,
-                        fillOpacity: 0.6
-                    })
-                    .bindPopup(popupHTML)
-                    .addTo(map);
-                    
-                    // Store reference with index
-                    marker.sismoId = s.id;
-                    sismoMarkers.push(marker);
-                });
+                // Update stats (using local sismos as primary regional reference)
+                updateStats(localSismos);
+                
+                // Refresh list based on the active tab
+                refreshSidebarList();
             })
             .catch(err => {
                 console.error("Error loading sismos data:", err);
-                const listContainer = document.getElementById('recent-sismos-list');
                 if (listContainer) {
                     listContainer.innerHTML = `<div class="error-text" style="color: #f44336; padding: 20px; text-align: center;"><i class="fa-solid fa-circle-exclamation"></i> Error al cargar datos de sismos.</div>`;
                 }
             });
     }
+
+    function renderLocalMarkers(data) {
+        data.forEach((s) => {
+            const lat = s.latitud;
+            const lon = s.longitud;
+            const mag = s.magnitud;
+            const depth = s.profundidad;
+            
+            let markerColor = '#4caf50'; // Low
+            let markerClass = 'mag-low';
+            if (mag >= 3.0 && mag < 5.0) {
+                markerColor = '#ffb300'; // Med
+                markerClass = 'mag-med';
+            } else if (mag >= 5.0) {
+                markerColor = '#f44336'; // High
+                markerClass = 'mag-high';
+            }
+            
+            const radiusSize = Math.max(mag * 3.5, 6);
+            
+            const popupHTML = `
+                <div class="map-popup sismo-popup" style="color: #111827; font-family: 'Outfit', sans-serif;">
+                    <div class="popup-mag-badge ${markerClass}" style="font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; display: inline-block;">Mw ${mag.toFixed(1)}</div>
+                    <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; color: #111827;">${s.descripcion}</h4>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Fecha (UTC):</strong> ${s.fecha_utc}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Hora (UTC):</strong> ${s.hora_utc}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Profundidad:</strong> ${depth} km</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Coordenadas:</strong> ${lat.toFixed(3)}, ${lon.toFixed(3)}</p>
+                    <p style="font-size: 0.8rem; margin: 4px 0 0 0; color: var(--text-muted); font-style: italic;">Sismo Regional (Locales)</p>
+                </div>
+            `;
+            
+            const marker = L.circleMarker([lat, lon], {
+                radius: radiusSize,
+                fillColor: markerColor,
+                color: markerColor,
+                weight: 1.5,
+                opacity: 0.9,
+                fillOpacity: 0.6
+            })
+            .bindPopup(popupHTML);
+            
+            marker.sismoId = s.id;
+            localSismosLayer.addLayer(marker);
+            localMarkers.push(marker);
+        });
+    }
+
+    function renderUsgsMarkers(data) {
+        data.forEach((s) => {
+            const lat = s.latitud;
+            const lon = s.longitud;
+            const mag = s.magnitud;
+            const depth = s.profundidad;
+            
+            let markerColor = '#4caf50'; // Low
+            let markerClass = 'mag-low';
+            if (mag >= 3.0 && mag < 5.0) {
+                markerColor = '#ffb300'; // Med
+                markerClass = 'mag-med';
+            } else if (mag >= 5.0) {
+                markerColor = '#f44336'; // High
+                markerClass = 'mag-high';
+            }
+            
+            const radiusSize = Math.max(mag * 3.5, 6);
+            
+            const popupHTML = `
+                <div class="map-popup sismo-popup" style="color: #111827; font-family: 'Outfit', sans-serif;">
+                    <div class="popup-mag-badge ${markerClass}" style="font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; display: inline-block;">Mw ${mag.toFixed(1)}</div>
+                    <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; color: #111827;">${s.descripcion}</h4>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Fecha (UTC):</strong> ${s.fecha_utc}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Hora (UTC):</strong> ${s.hora_utc}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Profundidad:</strong> ${depth} km</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Coordenadas:</strong> ${lat.toFixed(3)}, ${lon.toFixed(3)}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>País:</strong> ${s.pais}</p>
+                    ${s.url ? `<a href="${s.url}" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; margin-top: 8px; font-weight: 600; color: var(--accent);"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver en USGS</a>` : ''}
+                </div>
+            `;
+            
+            const marker = L.circleMarker([lat, lon], {
+                radius: radiusSize,
+                fillColor: markerColor,
+                color: markerColor,
+                weight: 1.5,
+                opacity: 0.9,
+                fillOpacity: 0.5,
+                dashArray: '3, 3' // Dashed outline for USGS sismos
+            })
+            .bindPopup(popupHTML);
+            
+            marker.sismoId = s.id;
+            usgsSismosLayer.addLayer(marker);
+            usgsMarkers.push(marker);
+        });
+    }
     
-    function populateRecentList(sismos) {
+    function refreshSidebarList() {
+        const sismos = (activeTab === 'locales') ? localSismos : usgsSismos;
         const listContainer = document.getElementById('recent-sismos-list');
         const badge = document.getElementById('sismos-badge');
         
         if (!listContainer) return;
         
+        if (badge) badge.textContent = sismos.length;
+        
         if (sismos.length === 0) {
             listContainer.innerHTML = `<div class="seismo-placeholder-text" style="color: #6b7280; padding: 20px; text-align: center;">No se registraron sismos recientes.</div>`;
-            if (badge) badge.textContent = '0';
             return;
         }
-        
-        if (badge) badge.textContent = sismos.length;
         
         listContainer.innerHTML = '';
         
@@ -229,16 +314,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 const lon = parseFloat(this.dataset.lon);
                 const id = parseInt(this.dataset.id);
                 
-                map.setView([lat, lon], 9);
+                // Pan map
+                map.setView([lat, lon], activeTab === 'locales' ? 9 : 7);
+                
+                // Active layer if disabled
+                const currentLayer = (activeTab === 'locales') ? localSismosLayer : usgsSismosLayer;
+                if (!map.hasLayer(currentLayer)) {
+                    map.addLayer(currentLayer);
+                }
                 
                 // Find matching marker and open popup
-                const marker = sismoMarkers.find(m => m.sismoId === id);
+                const markers = (activeTab === 'locales') ? localMarkers : usgsMarkers;
+                const marker = markers.find(m => m.sismoId === id);
                 if (marker) {
-                    marker.openPopup();
+                    setTimeout(() => {
+                        marker.openPopup();
+                    }, 200);
                 }
             });
             
             listContainer.appendChild(item);
+        });
+    }
+    
+    // Sidebar Tabs Logic
+    const tabLocales = document.getElementById('tab-locales');
+    const tabUsgs = document.getElementById('tab-usgs');
+    
+    if (tabLocales && tabUsgs) {
+        tabLocales.addEventListener('click', function() {
+            activeTab = 'locales';
+            tabLocales.classList.add('active');
+            tabUsgs.classList.remove('active');
+            refreshSidebarList();
+        });
+        
+        tabUsgs.addEventListener('click', function() {
+            activeTab = 'usgs';
+            tabUsgs.classList.add('active');
+            tabLocales.classList.remove('active');
+            refreshSidebarList();
         });
     }
     

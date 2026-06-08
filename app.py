@@ -23,6 +23,10 @@ def historical():
 def tools():
     return render_template('tools.html')
 
+@app.route('/clima')
+def clima():
+    return render_template('clima.html')
+
 @app.route('/api/sismos')
 def api_sismos():
     filters = {
@@ -60,6 +64,43 @@ def api_sismos():
     sismos = database.get_sismos(filters=filters, limit=limit)
     return jsonify(sismos)
 
+@app.route('/api/sismos/usgs')
+def api_sismos_usgs():
+    filters = {
+        'pais': request.args.get('pais'),
+        'min_magnitud': request.args.get('min_magnitud'),
+        'max_magnitud': request.args.get('max_magnitud'),
+        'profundidad_min': request.args.get('profundidad_min'),
+        'profundidad_max': request.args.get('profundidad_max'),
+        'fecha_inicio': request.args.get('fecha_inicio'),
+        'fecha_fin': request.args.get('fecha_fin'),
+        'buscar': request.args.get('buscar')
+    }
+    
+    # Safely convert parameters
+    for key in ['min_magnitud', 'max_magnitud']:
+        if filters[key]:
+            try:
+                filters[key] = float(filters[key])
+            except ValueError:
+                filters[key] = None
+                
+    for key in ['profundidad_min', 'profundidad_max']:
+        if filters[key]:
+            try:
+                filters[key] = int(filters[key])
+            except ValueError:
+                filters[key] = None
+                
+    limit = request.args.get('limit', 200)
+    try:
+        limit = int(limit)
+    except ValueError:
+        limit = 200
+        
+    sismos = database.get_sismos_usgs(filters=filters, limit=limit)
+    return jsonify(sismos)
+
 @app.route('/api/stats')
 def api_stats():
     stats = database.get_stats()
@@ -72,7 +113,8 @@ def api_news():
         limit = int(limit)
     except ValueError:
         limit = 10
-    news = database.get_news(limit=limit)
+    categoria = request.args.get('categoria')
+    news = database.get_news(limit=limit, categoria=categoria)
     return jsonify(news)
 
 @app.route('/api/webcam/proxy')
@@ -159,8 +201,10 @@ def trigger_scrape():
     try:
         import scraper
         new_count = scraper.scrape_sismos()
+        new_usgs = scraper.fetch_usgs_sismos('day')
+        new_clima = scraper.scrape_nhc_weather_alerts()
         scraper.seed_initial_news()
-        return jsonify({'success': True, 'new_sismos': new_count})
+        return jsonify({'success': True, 'new_sismos': new_count, 'new_usgs': new_usgs, 'new_clima': new_clima})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
