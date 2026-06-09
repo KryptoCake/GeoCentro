@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function loadNewsFeed() {
-        fetch('/api/news?limit=6')
+        fetch('/api/news?categoria=general&limit=6')
             .then(res => res.json())
             .then(data => {
                 if (data.length === 0) {
