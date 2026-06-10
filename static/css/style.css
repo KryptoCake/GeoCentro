@@ -361,7 +361,7 @@ button {
 
 .map-layout-grid {
     display: grid;
-    grid-template-columns: 2.5fr 1fr;
+    grid-template-columns: 2.5fr minmax(0, 1fr);
     gap: 24px;
 }
 .map-card {
@@ -454,6 +454,7 @@ button {
     display: flex;
     flex-direction: column;
     max-height: 544px;
+    min-width: 0;
 }
 .panel-header {
     display: flex;
