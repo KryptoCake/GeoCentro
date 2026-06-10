@@ -48,3 +48,19 @@ Este archivo registra el historial de sesiones de desarrollo y los hitos alcanza
   * Integridad de la base de datos en el archivo comprimido validada exitosamente mediante `PRAGMA integrity_check;` en Python.
 * **Sincronización:** Stage y commit de los archivos (`.gitignore`, `backup_vps.py`, `setup_cron.sh`, `verify_all.sh`, bitácora y plan de la sesión). Sincronizado y subido al repositorio.
 
+### 2. Importación de Sismos Históricos (2016-2017)
+* **Objetivo:** Integrar 2,804 registros de sismos recopilados en 2016-2017 en la base de datos de GeoCentro.
+* **Implementación:**
+  * Creado el script de migración **[migrate_2016_backup.py](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/migrate_2016_backup.py)** para procesar el dump SQL `backups/b8_18981120_Events.sql`.
+  * Conversión de fechas a `YYYY-MM-DD` y coordenadas a números flotantes con signo (eliminación de sufijos `N`, `S`, `E`, `W`).
+  * Normalización y separación de magnitudes (ej: `2.3MW` -> `2.3` y tipo `MW`).
+  * Limpieza automática de mojibake (caracteres extraños por codificación sucesiva) de los nombres de las regiones.
+  * Clasificación heurística de país con fallback a `Nicaragua` (al ser scraping local de INETER).
+  * Prevención robusta de duplicados mediante la comprobación de hash SHA-256 única del sismo.
+* **Pruebas y Verificación:**
+  * Se ejecutó el script exitosamente. Se importaron **2,803 registros nuevos** a la base de datos `geocentro.db` (1 registro falló debido a una errata de coordenadas en el dump original `11:25N`, lo cual fue solucionado posteriormente).
+  * Una segunda pasada del script omitió los 2,803 registros y cargó con éxito el registro restante reparado, verificando el funcionamiento del control de duplicados.
+  * El conteo total de sismos locales incrementó de **436 a 3,239** en la base de datos de desarrollo.
+* **Sincronización:** Stage, commit y push de las herramientas de migración y planes al repositorio remoto.
+
+

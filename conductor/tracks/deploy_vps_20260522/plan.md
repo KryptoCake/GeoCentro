@@ -40,3 +40,16 @@ Este documento detalla los pasos para realizar el despliegue del proyecto GeoCen
   - [x] Ejecutar `configure_subdomain.sh` para registrar el subdominio `geocentro.grupopy.me`.
   - [x] Verificar la resolución DNS y la accesibilidad HTTPS a `geocentro.grupopy.me`.
 - [x] **Task: Conductor - User Manual Verification 'Phase 3: Scraping Automation and Final Verification' (Protocol in workflow.md)** [9b7f2fc]
+
+## Phase 4: Import Legacy 2016-2017 Earthquake Data [checkpoint: c1b7783]
+- [x] **Task: Crear el script de migración `migrate_2016_backup.py`** [c1b7783]
+  - [x] Desarrollar parser de SQL dump `b8_18981120_Events.sql` para extraer inserciones de `evento`.
+  - [x] Implementar conversión de coordenadas (`11.56N` -> `11.56`, `85.58W` -> `-85.58`).
+  - [x] Implementar conversión de fechas (`YY/MM/DD` -> `YYYY-MM-DD`).
+  - [x] Implementar decodificación sucesiva para corregir mojibake en descripciones.
+  - [x] Implementar importación segura mediante la API `save_sismo` con prevención de duplicidad por hash.
+- [x] **Task: Ejecutar la migración local y verificar integridad de base de datos**
+  - [x] Ejecutar `migrate_2016_backup.py`.
+  - [x] Comprobar el recuento total e integridad de sismos importados.
+  - [x] Confirmar que segundas pasadas no insertan registros duplicados.
+- [x] **Task: Conductor - User Manual Verification 'Phase 4: Import Legacy 2016-2017 Earthquake Data' (Protocol in workflow.md)**
