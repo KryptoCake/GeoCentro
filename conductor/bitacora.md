@@ -31,3 +31,20 @@ Este archivo registra el historial de sesiones de desarrollo y los hitos alcanza
 
 ### 4. Plan de Despliegue VPS
 * Diseñamos un plan de despliegue y actualización continua en el archivo **[vps_agent_deployment_plan.md](file:///C:/Users/PC/.gemini/antigravity/brain/98522864-9897-4022-8619-0c0dd78548c7/vps_agent_deployment_plan.md)** para que el agente que opera en la VPS de Hostinger aplique la actualización en producción sin caídas del servicio.
+
+---
+
+## Sesión: 10 de junio de 2026
+
+### 1. Sistema de Respaldos de la VPS (Opción 1)
+* **Objetivo:** Implementar un sistema de respaldo diario automático y rotativo para base de datos y archivos de GeoCentro.
+* **Implementación:**
+  * Creado **[backup_vps.py](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/backup_vps.py)**, un script portable de Python que realiza el respaldo en caliente de la base de datos SQLite con `sqlite3.Connection.backup()`, empaqueta en `.tar.gz`, excluye carpetas de desarrollo/pesadas (`venv`, `.git`, `__pycache__`), y aplica una retención de 7 días.
+  * Modificado **[setup_cron.sh](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/setup_cron.sh)** para registrar el cron job diario a las 2:00 AM usando el Python del entorno virtual.
+  * Actualizado **[verify_all.sh](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/verify_all.sh)** para incluir la validación de la configuración de respaldos y el listado de archivos en la sección 5.
+  * Actualizado **[.gitignore](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/.gitignore)** para omitir la carpeta local de pruebas `backups/`.
+* **Pruebas y Verificación:**
+  * Ejecución manual de `backup_vps.py` exitosa localmente.
+  * Integridad de la base de datos en el archivo comprimido validada exitosamente mediante `PRAGMA integrity_check;` en Python.
+* **Sincronización:** Stage y commit de los archivos (`.gitignore`, `backup_vps.py`, `setup_cron.sh`, `verify_all.sh`, bitácora y plan de la sesión). Sincronizado y subido al repositorio.
+

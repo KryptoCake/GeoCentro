@@ -7,13 +7,13 @@
 
 # Conocimiento Adquirido y Visión del Proyecto
 
-## Sesión Actual (8 de junio de 2026)
+## Sesión Actual (10 de junio de 2026)
 - **Proyecto:** Monitor de eventos geológicos y climáticos para Centroamérica (GeoCentro).
-- **Tecnologías clave:** Python (Flask, SQLite, ElementTree), HTML5/CSS3 (Vanilla HSL, Hojas Glassmorphic), Leaflet.js, Open-Meteo API, Windy Embed Overlay.
-- **Funcionalidad actual:** Scraping de datos sísmicos (INETER, OVSICORI), integración global de sismos (USGS) con Layer Control en mapas y timeline dinámico, nueva división meteorológica con Windy embed, extremos de hoy en vivo para 6 capitales y alertas tropicales de ciclones de la NOAA/NHC.
-- **UAT & Bugs Resueltos:** Estandarización de URLs absolutas para alertas climáticas en la BD y JS, interactividad total en badges de países redirigiendo a su historial filtrado (especialmente para "Otros" con el feed global del USGS), y aislamiento de feeds de noticias (Portada muestra únicamente sismos y Clima muestra alertas de huracanes).
+- **Funcionalidad actual:** Sistema de respaldos automáticos y rotativos en caliente para la base de datos SQLite y archivos de código fuente, utilizando una rutina nativa en Python (`backup_vps.py`) ejecutada vía `cron` en la VPS a las 2:00 AM.
+- **Detalles técnicos:** Copia segura usando `sqlite3.Connection.backup()`, compresión en `.tar.gz`, filtrado de exclusión de directorios pesados (`venv`, `.git`), retención de 7 días, soporte para envío a Telegram y script de verificación integrado (`verify_all.sh`).
 
 ## Sesiones Anteriores
+- **Sesión (8 de junio de 2026):** Integración global de sismos (USGS) con Layer Control en mapas y timeline dinámico, nueva división meteorológica con Windy embed, extremos de hoy en vivo para 6 capitales y alertas tropicales de ciclones de la NOAA/NHC. UAT: Estandarización de URLs absolutas para alertas climáticas en la BD y JS, interactividad total en badges de países redirigiendo a su historial filtrado (especialmente para "Otros" con el feed global del USGS), y aislamiento de feeds de noticias.
 - **Sesión (5 de julio de 2025):** Estandarización de fechas de sismos (`YY/MM/DD` vs `YYYY-MM-DD`) entre scraping, BD y servidor, y reconstrucción de la base de datos.
 
 ## Visión Futura del Proyecto

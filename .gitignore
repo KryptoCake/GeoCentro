@@ -27,3 +27,6 @@ env/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Local backups
+backups/

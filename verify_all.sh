@@ -49,4 +49,39 @@ else
     echo "Log file not found at $LOG_PATH yet."
 fi
 echo ""
+
+echo "5. Backup Configuration and Status:"
+echo "-----------------------------------"
+BACKUP_SCRIPT="/var/www/geocentro/backup_vps.py"
+if [ -f "$BACKUP_SCRIPT" ]; then
+    echo "Backup script exists at $BACKUP_SCRIPT"
+    if [ -x "$BACKUP_SCRIPT" ]; then
+        echo "Backup script is executable."
+    else
+        echo "WARNING: Backup script is NOT executable! Run: chmod +x $BACKUP_SCRIPT"
+    fi
+else
+    echo "Backup script not found at $BACKUP_SCRIPT yet."
+fi
+
+# Check cron job
+if crontab -l 2>/dev/null | grep -F "backup_vps.py" >/dev/null; then
+    echo "Daily backup cron job: Configured"
+else
+    echo "Daily backup cron job: NOT configured"
+fi
+
+# Check existing backups
+BACKUP_DIR="/var/www/geocentro/backups"
+if [ -d "$BACKUP_DIR" ]; then
+    BACKUP_COUNT=$(find "$BACKUP_DIR" -name "geocentro_backup_*.tar.gz" | wc -l)
+    echo "Backups stored locally in $BACKUP_DIR: $BACKUP_COUNT"
+    if [ "$BACKUP_COUNT" -gt 0 ]; then
+        echo "Latest backup files:"
+        ls -lh "$BACKUP_DIR"/geocentro_backup_*.tar.gz | tail -n 3
+    fi
+else
+    echo "Backup directory not created yet."
+fi
+echo ""
 echo "=============================================="

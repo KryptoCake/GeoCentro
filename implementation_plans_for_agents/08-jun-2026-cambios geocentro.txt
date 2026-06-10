@@ -1,0 +1,76 @@
+Plan de Despliegue en Producción (VPS Hostinger) para el Agente Antigravity CLI
+Este documento contiene el plan detallado y los comandos secuenciales que el agente Antigravity CLI ejecutará en la VPS de destino para pasar los cambios de UAT y la división climática a producción.
+
+Dado que la infraestructura base (Nginx, Systemd, Virtualenv, Cron) ya está configurada, este plan se enfoca en la actualización y despliegue continuo (hot-update) de la aplicación sin interrumpir el servicio.
+
+1. Pasos de Despliegue (Actualización)
+El agente Antigravity CLI debe ejecutar la siguiente secuencia de comandos en el directorio del proyecto /var/www/geocentro.
+
+Paso 1.1: Obtener la última versión del repositorio
+El agente debe descargar los últimos commits (incluyendo las correcciones de UAT y el plan actualizado) desde la rama principal:
+
+bash
+
+cd /var/www/geocentro
+git fetch origin main
+git reset --hard origin/main
+Paso 1.2: Actualizar dependencias de Python (si aplica)
+Activar el entorno virtual e instalar cualquier dependencia adicional del archivo requirements.txt:
+
+bash
+
+source venv/bin/activate
+pip install -r requirements.txt
+Paso 1.3: Ejecutar migraciones y limpieza de base de datos
+Ejecutar la inicialización de la base de datos para correr la migración de la columna categoria (si no se ha hecho) y realizar la limpieza automatizada de registros con URLs climáticas antiguas o inválidas:
+
+bash
+
+python -c "import database; database.init_db()"
+Paso 1.4: Forzar raspado inicial para validar conexión
+Ejecutar una ronda del scraper para garantizar que la conexión con INETER, USGS y el feed RSS de NOAA/NHC funciona perfectamente y se almacena con el formato de URL absoluto:
+
+bash
+
+python scraper.py
+Paso 1.5: Reiniciar el servicio de producción (Gunicorn)
+Reiniciar el daemon de Systemd que corre la aplicación Flask para que cargue el código Python actualizado:
+
+bash
+
+sudo systemctl restart geocentro
+2. Plan de Verificación
+El agente debe auto-verificar el estado del despliegue ejecutando los siguientes comandos:
+
+A. Verificación de Procesos y Servicios
+Estado de la aplicación:
+bash
+
+sudo systemctl status geocentro
+Resultado esperado: El servicio debe reportar un estado de active (running).
+Estado del Proxy Inverso (Nginx):
+bash
+
+sudo nginx -t
+sudo systemctl status nginx
+Resultado esperado: La sintaxis de Nginx debe ser correcta (syntax is ok / test is successful) y el servicio debe estar activo.
+B. Verificación de Integridad y Acceso Local
+Prueba de conexión HTTP:
+bash
+
+curl -I http://127.0.0.1:8000/clima
+Resultado esperado: Debe devolver una respuesta HTTP 200 OK.
+Inspección de logs recientes de la aplicación:
+bash
+
+sudo journalctl -u geocentro.service -n 50 --no-pager
+Resultado esperado: Sin excepciones de importación o errores fatales tras el reinicio.
+3. Procedimiento de Reversión (Rollback)
+Si la verificación local falla o reporta errores persistentes de código, el agente debe revertir al commit anterior estable en producción:
+
+bash
+
+# Cambiar al último commit funcional conocido
+git reset --hard HEAD@{1}
+# Reiniciar el servicio
+sudo systemctl restart geocentro
