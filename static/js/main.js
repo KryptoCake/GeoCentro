@@ -87,13 +87,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     const card = document.createElement('div');
                     card.className = 'news-card-item';
                     const countryUrl = `/historical?pais=${encodeURIComponent(item.pais)}`;
+                    
+                    let imageHtml = '';
+                    if (item.imagen_url) {
+                        imageHtml = `
+                            <div class="news-item-img-wrapper">
+                                <img src="${item.imagen_url}" alt="${item.titulo}" class="news-item-img" onerror="this.parentNode.style.display='none';">
+                            </div>
+                        `;
+                    }
+                    
+                    let linkHtml = '';
+                    let alertUrl = item.url ? item.url.trim() : '';
+                    if (alertUrl && alertUrl !== '#' && !alertUrl.startsWith('#')) {
+                        linkHtml = `<a href="${alertUrl}" target="_blank" class="news-item-more-link" style="font-size: 0.75rem; font-weight: 700; color: var(--accent); display: inline-flex; align-items: center; gap: 4px; text-decoration: none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver más</a>`;
+                    }
+                    
                     card.innerHTML = `
-                        <div class="news-item-header">
-                            <h4 class="news-item-title">${item.titulo}</h4>
-                            <span class="news-item-date">${item.fecha}</span>
+                        ${imageHtml}
+                        <div class="news-item-content">
+                            <div class="news-item-header">
+                                <h4 class="news-item-title">${item.titulo}</h4>
+                                <span class="news-item-date">${item.fecha}</span>
+                            </div>
+                            <p class="news-item-desc">${item.resumen}</p>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
+                                <a href="${countryUrl}" class="news-item-country-badge" style="text-decoration: none; cursor: pointer; margin-top: 0;">${item.pais}</a>
+                                ${linkHtml}
+                            </div>
                         </div>
-                        <p class="news-item-desc">${item.resumen}</p>
-                        <a href="${countryUrl}" class="news-item-country-badge" style="text-decoration: none; cursor: pointer;">${item.pais}</a>
                     `;
                     newsContainer.appendChild(card);
                 });

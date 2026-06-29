@@ -46,11 +46,13 @@ def init_db():
         )
     ''')
     
-    # Run migration to add 'categoria' column to 'news' table if it does not exist
+    # Run migration to add columns to 'news' table if they do not exist
     cursor.execute("PRAGMA table_info(news)")
     columns = [row[1] for row in cursor.fetchall()]
     if 'categoria' not in columns:
         cursor.execute("ALTER TABLE news ADD COLUMN categoria TEXT DEFAULT 'general'")
+    if 'imagen_url' not in columns:
+        cursor.execute("ALTER TABLE news ADD COLUMN imagen_url TEXT")
     
     # Clean up old weather alerts that have invalid, empty, or relative URLs
     cursor.execute("DELETE FROM news WHERE categoria = 'clima' AND (url IS NULL OR url = '' OR url = '#' OR url LIKE '#%' OR url NOT LIKE 'http%')")
@@ -105,16 +107,16 @@ def save_sismo(fecha_utc, hora_utc, latitud, longitud, profundidad, magnitud, ti
         conn.close()
     return inserted
 
-def save_news(titulo, url, fecha, resumen, pais, categoria='general'):
+def save_news(titulo, url, fecha, resumen, pais, categoria='general', imagen_url=None):
     hash_id = generate_news_hash(titulo, url)
     conn = get_db_connection()
     cursor = conn.cursor()
     inserted = False
     try:
         cursor.execute('''
-            INSERT INTO news (titulo, url, fecha, resumen, pais, categoria, hash_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (titulo, url, fecha, resumen, pais, categoria, hash_id))
+            INSERT INTO news (titulo, url, fecha, resumen, pais, categoria, imagen_url, hash_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (titulo, url, fecha, resumen, pais, categoria, imagen_url, hash_id))
         conn.commit()
         inserted = True
     except sqlite3.IntegrityError:
@@ -308,3 +310,81 @@ def get_sismos_usgs(filters=None, limit=200):
     conn.close()
     
     return [dict(row) for row in rows]
+
+def update_news(news_id, titulo=None, url=None, fecha=None, resumen=None, pais=None, categoria=None, imagen_url=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    updates = []
+    params = []
+    
+    if titulo is not None:
+        updates.append("titulo = ?")
+        params.append(titulo)
+    if url is not None:
+        updates.append("url = ?")
+        params.append(url)
+    if fecha is not None:
+        updates.append("fecha = ?")
+        params.append(fecha)
+    if resumen is not None:
+        updates.append("resumen = ?")
+        params.append(resumen)
+    if pais is not None:
+        updates.append("pais = ?")
+        params.append(pais)
+    if categoria is not None:
+        updates.append("categoria = ?")
+        params.append(categoria)
+    if imagen_url is not None:
+        updates.append("imagen_url = ?")
+        params.append(imagen_url)
+        
+    if not updates:
+        conn.close()
+        return False
+        
+    # If title or url is updated, we recompute hash_id to keep it consistent
+    if titulo is not None or url is not None:
+        cursor.execute("SELECT titulo, url FROM news WHERE id = ?", (news_id,))
+        row = cursor.fetchone()
+        if row:
+            current_title = titulo if titulo is not None else row['titulo']
+            current_url = url if url is not None else row['url']
+            new_hash = generate_news_hash(current_title, current_url)
+            updates.append("hash_id = ?")
+            params.append(new_hash)
+            
+    params.append(news_id)
+    query = f"UPDATE news SET {', '.join(updates)} WHERE id = ?"
+    
+    success = False
+    try:
+        cursor.execute(query, params)
+        conn.commit()
+        success = cursor.rowcount > 0
+    except sqlite3.IntegrityError:
+        success = False
+    finally:
+        conn.close()
+    return success
+
+def delete_news(news_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    success = False
+    try:
+        cursor.execute("DELETE FROM news WHERE id = ?", (news_id,))
+        conn.commit()
+        success = cursor.rowcount > 0
+    finally:
+        conn.close()
+    return success
+
+def get_news_by_id(news_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM news WHERE id = ?", (news_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None

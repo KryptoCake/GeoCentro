@@ -190,10 +190,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Style alert depending on severity
                     let borderStyle = '';
                     let iconStyle = '';
-                    if (item.titulo.toLowerCase().includes('warning') || item.titulo.toLowerCase().includes('alerta') || item.titulo.toLowerCase().includes('huracán') || item.titulo.toLowerCase().includes('hurricane')) {
+                    const titleLower = item.titulo.toLowerCase();
+                    if (titleLower.includes('warning') || titleLower.includes('alerta') || titleLower.includes('huracán') || titleLower.includes('hurricane') || titleLower.includes('sismo fuerte')) {
                         borderStyle = 'border-left: 4px solid var(--danger);';
                         iconStyle = '<i class="fa-solid fa-triangle-exclamation" style="color: var(--danger); margin-right: 6px;"></i>';
-                    } else if (item.titulo.toLowerCase().includes('watch') || item.titulo.toLowerCase().includes('vigilancia') || item.titulo.toLowerCase().includes('storm') || item.titulo.toLowerCase().includes('tormenta')) {
+                    } else if (titleLower.includes('watch') || titleLower.includes('vigilancia') || titleLower.includes('storm') || titleLower.includes('tormenta') || titleLower.includes('sismo moderado')) {
                         borderStyle = 'border-left: 4px solid var(--warning);';
                         iconStyle = '<i class="fa-solid fa-circle-exclamation" style="color: var(--warning); margin-right: 6px;"></i>';
                     } else {
@@ -203,9 +204,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     card.setAttribute('style', borderStyle);
                     
-                    let alertUrl = item.url ? item.url.trim() : 'https://www.nhc.noaa.gov/';
-                    if (alertUrl === '#' || alertUrl.startsWith('#')) {
-                        alertUrl = 'https://www.nhc.noaa.gov/';
+                    let alertUrl = item.url ? item.url.trim() : '';
+                    if (!alertUrl || alertUrl === '#' || alertUrl.startsWith('#')) {
+                        alertUrl = item.titulo.startsWith('[') ? 'https://www.nhc.noaa.gov/' : '';
                     } else if (!alertUrl.startsWith('http')) {
                         if (alertUrl.startsWith('/')) {
                             alertUrl = 'https://www.nhc.noaa.gov' + alertUrl;
@@ -216,15 +217,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const countryUrl = `/historical?pais=${encodeURIComponent(item.pais)}`;
                     
+                    let imageHtml = '';
+                    if (item.imagen_url) {
+                        imageHtml = `
+                            <div class="news-item-img-wrapper">
+                                <img src="${item.imagen_url}" alt="${item.titulo}" class="news-item-img" onerror="this.parentNode.style.display='none';">
+                            </div>
+                        `;
+                    }
+                    
+                    let linkHtml = '';
+                    if (alertUrl) {
+                        linkHtml = `<a href="${alertUrl}" target="_blank" style="font-size: 0.75rem; font-weight: 700; color: var(--accent); display: inline-flex; align-items: center; gap: 4px; text-decoration: none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Fuente</a>`;
+                    }
+                    
                     card.innerHTML = `
-                        <div class="news-item-header">
-                            <h4 class="news-item-title">${iconStyle}${item.titulo}</h4>
-                            <span class="news-item-date">${item.fecha}</span>
-                        </div>
-                        <p class="news-item-desc" style="font-family: monospace; font-size: 0.8rem; background: rgba(0,0,0,0.15); padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.02); margin-top: 6px; white-space: pre-line; line-height: 1.4;">${item.resumen}</p>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 10px;">
-                            <a href="${countryUrl}" class="news-item-country-badge" style="text-decoration: none; cursor: pointer;">${item.pais}</a>
-                            <a href="${alertUrl}" target="_blank" style="font-size: 0.75rem; font-weight: 700; color: var(--accent); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Fuente</a>
+                        ${imageHtml}
+                        <div class="news-item-content">
+                            <div class="news-item-header">
+                                <h4 class="news-item-title">${iconStyle}${item.titulo}</h4>
+                                <span class="news-item-date">${item.fecha}</span>
+                            </div>
+                            <p class="news-item-desc" style="font-family: monospace; font-size: 0.8rem; background: rgba(0,0,0,0.15); padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.02); margin-top: 6px; white-space: pre-line; line-height: 1.4;">${item.resumen}</p>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
+                                <a href="${countryUrl}" class="news-item-country-badge" style="text-decoration: none; cursor: pointer; margin-top: 0;">${item.pais}</a>
+                                ${linkHtml}
+                            </div>
                         </div>
                     `;
                     alertsContainer.appendChild(card);
