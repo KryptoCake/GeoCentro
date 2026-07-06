@@ -1,0 +1,11 @@
+{
+  "track_id": "dedup_raw_canonical_20260706",
+  "type": "database_refactor",
+  "status": "in_progress",
+  "created_at": "2026-07-06T21:58:00Z",
+  "updated_at": "2026-07-06T21:58:00Z",
+  "description": "Deduplicación de sismos con capa Raw/Canónica, geoclasificación por coordenadas, y corrección de integridad de datos",
+  "plan_source": "implementation_plans_for_agents/Plan de implementacion Fable V. 4.1.txt",
+  "plan_version": "4.1",
+  "checkpoint_pre": "50ec1d2"
+}
