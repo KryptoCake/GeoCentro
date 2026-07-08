@@ -93,9 +93,7 @@ def scrape_ovsicori_recientes():
             except ValueError:
                 fecha_formatted = fecha
                 
-            country = get_country_from_desc(descripcion)
-            if country == 'Otros' or not country:
-                country = 'Costa Rica'
+            country = database.determinar_pais_coordenadas(latitud, longitud, descripcion)
                 
             inserted = database.save_sismo(
                 fecha_utc=fecha_formatted,
@@ -106,15 +104,17 @@ def scrape_ovsicori_recientes():
                 magnitud=magnitud,
                 tipo='CR_REC',
                 descripcion=descripcion,
-                pais=country
+                agencia='OVSICORI',
+                feed='OVSICORI_REC',
+                scraped_at=int(datetime.now(timezone.utc).timestamp())
             )
             
             if inserted:
                 new_count += 1
                 if magnitud >= 4.0:
-                    alert_title = f"Sismo Reciente de magnitud {magnitud} en Costa Rica"
+                    alert_title = f"Sismo Reciente de magnitud {magnitud} en {country}"
                     if magnitud >= 5.0:
-                        alert_title = f"ALERTA: Sismo Fuerte de magnitud {magnitud} en Costa Rica"
+                        alert_title = f"ALERTA: Sismo Fuerte de magnitud {magnitud} en {country}"
                         
                     alert_desc = f"Un evento sísmico de magnitud {magnitud} Mw ocurrió el {fecha_formatted} a las {hora} (hora local/red), localizado a una profundidad de {profundidad} km. Referencia: {descripcion}."
                     database.save_news(
@@ -186,14 +186,12 @@ def scrape_ovsicori_sentidos():
             except ValueError:
                 fecha_formatted = fecha
                 
-            country = get_country_from_desc(localizacion)
-            if country == 'Otros' or not country:
-                country = 'Costa Rica'
-                
             descripcion = f"{localizacion} (Origen: {origen}"
             if reportes:
                 descripcion += f", Sentido en: {reportes}"
             descripcion += ")"
+            
+            country = database.determinar_pais_coordenadas(latitud, longitud, descripcion)
             
             inserted = database.save_sismo(
                 fecha_utc=fecha_formatted,
@@ -204,14 +202,16 @@ def scrape_ovsicori_sentidos():
                 magnitud=magnitud,
                 tipo='CR_SEN',
                 descripcion=descripcion,
-                pais=country
+                agencia='OVSICORI',
+                feed='OVSICORI_SEN',
+                scraped_at=int(datetime.now(timezone.utc).timestamp())
             )
             
             if inserted:
                 new_count += 1
-                alert_title = f"Sismo Sentido de magnitud {magnitud} en Costa Rica"
+                alert_title = f"Sismo Sentido de magnitud {magnitud} en {country}"
                 if magnitud >= 5.0:
-                    alert_title = f"ALERTA: Sismo Fuerte Sentido de magnitud {magnitud} en Costa Rica"
+                    alert_title = f"ALERTA: Sismo Fuerte Sentido de magnitud {magnitud} en {country}"
                     
                 alert_desc = f"Sismo SENTIDO de magnitud {magnitud} Mw registrado el {fecha_formatted} a las {hora}. Referencia: {descripcion}."
                 database.save_news(
@@ -277,7 +277,7 @@ def scrape_sismos():
                 except ValueError:
                     date_formatted = "20" + date_yy.replace('/', '-')
                     
-                country = get_country_from_desc(description)
+                country = database.determinar_pais_coordenadas(lat, lon, description)
                 
                 # Save to database
                 inserted = database.save_sismo(
@@ -289,7 +289,9 @@ def scrape_sismos():
                     magnitud=magnitude,
                     tipo=sismo_type,
                     descripcion=description,
-                    pais=country
+                    agencia='INETER',
+                    feed='INETER',
+                    scraped_at=int(datetime.now(timezone.utc).timestamp())
                 )
                 
                 if inserted:

@@ -63,4 +63,34 @@ Este archivo registra el historial de sesiones de desarrollo y los hitos alcanza
   * El conteo total de sismos locales incrementó de **436 a 3,239** en la base de datos de desarrollo.
 * **Sincronización:** Stage, commit y push de las herramientas de migración y planes al repositorio remoto.
 
+---
+
+## Sesión: 8 de julio de 2026
+
+### 1. Auditoría y Deduplicación del Catálogo de Sismos (Capa Raw/Canónica)
+* **Objetivo:** Implementar el plan de deduplicación definitivo v4.1 (diseñado con Fable 5) para eliminar la redundancia multi-agencia de sismos, corregir la geoclasificación por coordenadas y garantizar la estabilidad de los enlaces históricos de la base de datos de GeoCentro.
+* **Implementación:**
+  * **[database.py](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/database.py):**
+    * Creamos la tabla `sismos_raw` (capa cruda e inmutable de reportes) y agregamos `t_epoch` (epoch UTC) e índices a ambas tablas.
+    * Activamos modo `WAL` y `busy_timeout=5000` para concurrencia segura ante scrapers de n8n.
+    * Implementamos geoclasificación robusta continental mediante **clamping + Haversine** a los bounding boxes exclusivos de los 6 países centroamericanos (umbral 500 km).
+    * Desarrollamos matching atómico con ventana de $\pm45$s y distancia adaptativa continua con score determinista normalizado.
+    * Definimos la magnitud canónica como la **mediana** post-filtrado por agencia, impidiendo que una agencia vote múltiples veces si tiene feeds duplicados.
+    * Rediseñamos `save_sismo` bajo transacciones `BEGIN IMMEDIATE` atómicas e implementamos rescate transparente de IDs en `get_sismo_by_id`.
+  * **[scraper.py](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/scraper.py):**
+    * Retiramos el fallback estático a `'Costa Rica'` de OVSICORI.
+    * Modificamos los scrapers para registrar el epoch Unix (`scraped_at`), la fuente/ feed de ingesta (`feed`) y la institución (`agencia`).
+  * **[app.py](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/app.py):**
+    * Agregamos el endpoint `/api/sismos/<int:sismo_id>` que utiliza `database.get_sismo_by_id` para resolver reportes crudos antiguos.
+  * **[migrate_and_depurate.py](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/migrate_and_depurate.py):**
+    * Script de migración única: realiza backup en caliente con `sqlite3.Connection.backup()`, inicializa el esquema, clona el histórico a raw, vacía y reprocesa en lote ordenado por `t_epoch` llamando a la deduplicación atómica.
+* **Pruebas y Verificación:**
+  * Se ejecutó `migrate_and_depurate.py` con éxito rotundo.
+  * **Suite de Aserciones:** Pasaron las 8 aserciones de regresión: conversión UTC (A1), doblete del 26-06 (A2), Masachapa fusionados (A3), Guanacaste 09-06 magnitud mediana post-filtro (A4), exclusión de telesismos de Costa Rica (A5), clasificación del Golfo de Fonseca (A6), reproducibilidad/idempotencia en lote limpio (A7) y redirección de IDs (A8).
+  * El catálogo local depuró **64 duplicados** (factor 1.9%) y corrigió la distribución geográfica (eliminó 162 sismos incorrectamente marcados como `'Otros'`, asignando 507 nuevos sismos de forma precisa a Honduras y otros países centroamericanos).
+  * El scraper local (`scraper.py`) corrió y añadió 182 sismos deduplicando en caliente en transacciones atómicas.
+  * La aplicación local (`app.py`) levantó correctamente en el puerto 5000 sin fallos de importación.
+* **Sincronización:** Stage, commit y push de todos los archivos (`database.py`, `scraper.py`, `app.py`, `migrate_and_depurate.py` y bitácora de sesión) cerrando el track.
+
+
 

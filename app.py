@@ -101,6 +101,13 @@ def api_sismos_usgs():
     sismos = database.get_sismos_usgs(filters=filters, limit=limit)
     return jsonify(sismos)
 
+@app.route('/api/sismos/<int:sismo_id>')
+def api_sismo_by_id(sismo_id):
+    sismo = database.get_sismo_by_id(sismo_id)
+    if sismo:
+        return jsonify(sismo)
+    return jsonify({'error': 'Sismo no encontrado'}), 404
+
 @app.route('/api/stats')
 def api_stats():
     stats = database.get_stats()
