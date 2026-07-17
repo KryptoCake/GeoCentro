@@ -30,3 +30,9 @@ Desktop.ini
 
 # Local backups
 backups/
+
+# Prob_calc data files
+Prob_calc/datos/
+Prob_calc/*.npz
+Prob_calc/test_zonas.kmz
+datos/
