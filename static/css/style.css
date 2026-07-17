@@ -1506,3 +1506,102 @@ button {
     transform: scale(1.03);
 }
 
+/* ============================================================================
+   ESTILOS ADICIONALES: MAPA DE RIESGO E INTEROPERABILIDAD KML
+   ============================================================================ */
+
+/* Personalización de Leaflet para encajar con el diseño oscuro de GeoCentro */
+.leaflet-container {
+    font-family: inherit !important;
+}
+
+.leaflet-bar {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+}
+
+.leaflet-bar a, .leaflet-bar a:hover {
+    background-color: #1a1a1e !important;
+    color: #fff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.leaflet-bar a.leaflet-disabled {
+    background-color: #121214 !important;
+    color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background: #1a1a1e !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+    border-radius: var(--radius-md) !important;
+}
+
+.leaflet-popup-content {
+    margin: 12px 16px !important;
+    font-size: 0.85rem !important;
+    line-height: 1.5 !important;
+}
+
+.leaflet-popup-close-button {
+    color: var(--text-secondary) !important;
+    padding: 8px !important;
+}
+
+.leaflet-popup-close-button:hover {
+    color: #fff !important;
+    background: none !important;
+}
+
+/* Personalización de control de capas */
+.leaflet-control-layers {
+    background: #1a1a1e !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 8px 12px !important;
+}
+
+.leaflet-control-layers-expanded {
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+}
+
+/* Estilos de la calculadora de riesgo interactiva en el sidebar */
+.risk-sidebar .card {
+    border-radius: var(--radius-sm);
+    box-shadow: none;
+    transition: var(--transition);
+}
+
+.risk-sidebar .card:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Estilos de Gauge */
+.gauge-container {
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+    animation: pulse-shadow 3s infinite alternate;
+}
+
+@keyframes pulse-shadow {
+    0% { box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+    100% { box-shadow: 0 5px 25px rgba(255, 87, 34, 0.15); }
+}
+
+/* Controles de carga KML */
+#btn-file-dummy {
+    transition: var(--transition);
+}
+
+#btn-file-dummy:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #fff !important;
+}
+
+

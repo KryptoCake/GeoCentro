@@ -3,7 +3,9 @@ import hashlib
 import os
 import math
 import statistics
+import sys
 from datetime import datetime, timezone
+from shapely.geometry import Polygon, Point
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'geocentro.db')
 
@@ -249,6 +251,34 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    # Create poligonos table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS poligonos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT UNIQUE NOT NULL,
+            descripcion TEXT,
+            peso REAL,
+            unidad TEXT,
+            color TEXT DEFAULT '#ff5722',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Create poligono_puntos table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS poligono_puntos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            poligono_id INTEGER NOT NULL REFERENCES poligonos(id) ON DELETE CASCADE,
+            latitud REAL NOT NULL,
+            longitud REAL NOT NULL,
+            orden INTEGER NOT NULL
+        )
+    ''')
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_puntos_poligono ON poligono_puntos(poligono_id)")
+
+    # Precargar polígonos por defecto
+    _precargar_poligonos_defecto(conn)
 
     conn.commit()
     conn.close()
@@ -782,3 +812,400 @@ def get_sismos_usgs(filters=None, limit=200):
     conn.close()
 
     return [dict(row) for row in rows]
+
+
+# ============================================================================
+# Módulo de Riesgo Sísmico y Polígonos de Interoperabilidad KML
+# ============================================================================
+
+def _precargar_poligonos_defecto(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM poligonos")
+    if cursor.fetchone()[0] > 0:
+        return # Ya hay datos
+    
+    # Precargar 3 polígonos representativos de Centroamérica (Nicaragua)
+    poligonos_demo = [
+        {
+            "nombre": "Área Metropolitana de Managua (Fallas locales)",
+            "descripcion": "Zona urbana de Managua propensa a sismos corticales por fallamiento local. Incluye fallas activas como Tiscapa, Estadio y Chico Largo.",
+            "peso": 1500000.0,
+            "unidad": "Habitantes expuestos",
+            "color": "#f44336",
+            "puntos": [
+                (12.1600, -86.3200),
+                (12.1600, -86.2000),
+                (12.0800, -86.2000),
+                (12.0800, -86.3200),
+                (12.1600, -86.3200) # Cerrado
+            ]
+        },
+        {
+            "nombre": "León - Chinandega (Región de Suelos Blandos)",
+            "descripcion": "Zona costera y de planicie del noroeste caracterizada por suelos arcillosos y volcánicos que amplifican las ondas de subducción.",
+            "peso": 420000.0,
+            "unidad": "Habitantes expuestos",
+            "color": "#ff9800",
+            "puntos": [
+                (12.6000, -87.1000),
+                (12.6000, -86.7000),
+                (12.3000, -86.7000),
+                (12.3000, -87.1000),
+                (12.6000, -87.1000) # Cerrado
+            ]
+        },
+        {
+            "nombre": "Zona de Influencia Activa - Complejo Volcánico Masaya",
+            "descripcion": "Área con alta susceptibilidad a enjambres sísmicos volcánicos y deformación de terreno asociada al lago de lava activo.",
+            "peso": 30000.0,
+            "unidad": "Habitantes expuestos",
+            "color": "#e91e63",
+            "puntos": [
+                (12.0200, -86.1500),
+                (12.0200, -86.0500),
+                (11.9500, -86.0500),
+                (11.9500, -86.1500),
+                (12.0200, -86.1500) # Cerrado
+            ]
+        }
+    ]
+
+    for p in poligonos_demo:
+        try:
+            cursor.execute('''
+                INSERT INTO poligonos (nombre, descripcion, peso, unidad, color)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (p["nombre"], p["descripcion"], p["peso"], p["unidad"], p["color"]))
+            poligono_id = cursor.lastrowid
+            
+            for i, pt in enumerate(p["puntos"]):
+                cursor.execute('''
+                    INSERT INTO poligono_puntos (poligono_id, latitud, longitud, orden)
+                    VALUES (?, ?, ?, ?)
+                ''', (poligono_id, pt[0], pt[1], i))
+        except Exception as e:
+            print(f"Error al precargar polígono: {e}")
+
+
+def add_poligono(nombre, descripcion, peso, unidad, puntos, color=None):
+    """Agrega un polígono y sus puntos (vértices) de forma transaccional.
+    puntos es una lista de tuplas o diccionarios con (lat, lon)."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    success = False
+    try:
+        cursor.execute("BEGIN IMMEDIATE")
+        cursor.execute('''
+            INSERT INTO poligonos (nombre, descripcion, peso, unidad, color)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (nombre, descripcion, peso, unidad, color or '#ff5722'))
+        poligono_id = cursor.lastrowid
+        
+        for i, pt in enumerate(puntos):
+            lat = pt[0] if isinstance(pt, (tuple, list)) else pt.get('lat')
+            lon = pt[1] if isinstance(pt, (tuple, list)) else pt.get('lon')
+            cursor.execute('''
+                INSERT INTO poligono_puntos (poligono_id, latitud, longitud, orden)
+                VALUES (?, ?, ?, ?)
+            ''', (poligono_id, lat, lon, i))
+        
+        conn.commit()
+        success = True
+    except Exception as e:
+        conn.rollback()
+        print(f"Error al insertar polígono: {e}")
+        success = False
+    finally:
+        conn.close()
+    return success
+
+
+def get_poligonos():
+    """Retorna todos los polígonos con sus vértices estructurados."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM poligonos ORDER BY id")
+    polys = cursor.fetchall()
+    
+    result = []
+    for poly in polys:
+        poly_dict = dict(poly)
+        cursor.execute("SELECT latitud, longitud, orden FROM poligono_puntos WHERE poligono_id = ? ORDER BY orden", (poly_dict['id'],))
+        pts = cursor.fetchall()
+        poly_dict['puntos'] = [{'lat': p['latitud'], 'lon': p['longitud']} for p in pts]
+        result.append(poly_dict)
+        
+    conn.close()
+    return result
+
+
+_GRID_CACHE = None
+
+def _cargar_cache_grilla():
+    global _GRID_CACHE
+    if _GRID_CACHE is not None:
+        return _GRID_CACHE
+    
+    ruta_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Prob_calc', 'datos', 'celdas_atributos.csv')
+    if not os.path.exists(ruta_csv):
+        return None
+        
+    try:
+        # Importación diferida para no penalizar el arranque global
+        import pandas as pd
+        df = pd.read_csv(ruta_csv)
+        # Convertir a un diccionario rápido indexado por 'idx'
+        _GRID_CACHE = {row['idx']: row for row in df.to_dict(orient='records')}
+    except Exception as e:
+        print(f"Error al cargar grilla en memoria: {e}")
+        _GRID_CACHE = None
+    return _GRID_CACHE
+
+
+def evaluar_punto(lat, lon):
+    """Evalúa la pertenencia a polígonos (Shapely) y los parámetros geofísicos (Vs30/Slab2)."""
+    # 1. Evaluar polígonos relacionales (Shapely)
+    poligonos = get_poligonos()
+    poligonos_activos = []
+    
+    point = Point(lon, lat) # Shapely usa (longitud, latitud)
+    for p in poligonos:
+        if len(p['puntos']) >= 3:
+            coords = [(pt['lon'], pt['lat']) for pt in p['puntos']]
+            try:
+                poly = Polygon(coords)
+                if poly.contains(point):
+                    poligonos_activos.append({
+                        'nombre': p['nombre'],
+                        'descripcion': p['descripcion'],
+                        'peso': p['peso'],
+                        'unidad': p['unidad'],
+                        'color': p['color']
+                    })
+            except Exception as e:
+                print(f"Error al evaluar geometría de polígono {p['nombre']}: {e}")
+                
+    # 2. Consultar grilla de Prob_calc
+    grilla = _cargar_cache_grilla()
+    vs30 = None
+    clase_sitio = "?"
+    amp_factor = 0.0
+    slab_prof = None
+    en_grilla = False
+    
+    # Importación diferida de config_grilla
+    try:
+        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Prob_calc'))
+        import config_grilla as CG
+        idx = int(CG.indice_celda(lat, lon))
+        if idx != -1 and grilla is not None and idx in grilla:
+            celda_data = grilla[idx]
+            vs30 = celda_data.get('vs30_ms')
+            clase_sitio = celda_data.get('clase_sitio', '?')
+            amp_factor = celda_data.get('amp_factor', 0.0)
+            slab_prof = celda_data.get('slab_prof_km')
+            en_grilla = True
+    except Exception as e:
+        print(f"Error al consultar grilla Prob_calc: {e}")
+        
+    # 3. Calcular heurística de riesgo científica
+    # Amenaza base
+    hazard = 40.0
+    
+    # Si está en el arco volcánico / pacífico
+    if lon < -85.5:
+        # Ecuación de distancia de Fable 5
+        dist_volc = abs(lat - (-0.73 * lon - 51.1)) / math.sqrt(1 + 0.73**2)
+        hazard = 85.0 - (dist_volc * 15.0)
+        if hazard < 55.0:
+            hazard = 55.0
+        
+        # Managua fault system
+        dist_mng = math.sqrt((lat - 12.13)**2 + (lon - -86.25)**2)
+        if dist_mng < 0.4:
+            hazard += (0.4 - dist_mng) * 35.0
+    else:
+        hazard = 55.0
+        
+    # Factor por polígonos activos (acumulativo)
+    # Por ejemplo, si está en el complejo Masaya o Managua fallas, incrementamos la amenaza
+    incremento_polys = 0.0
+    for pa in poligonos_activos:
+        if "falla" in pa['nombre'].lower() or "volcán" in pa['nombre'].lower() or "activo" in pa['nombre'].lower():
+            incremento_polys += 15.0
+            
+    hazard += incremento_polys
+    hazard = min(95.0, max(20.0, hazard))
+    
+    # Vulnerabilidad y Efecto de sitio (Vs30)
+    # Si tenemos Vs30 real, lo incorporamos
+    efecto_sitio_mult = 1.0
+    if en_grilla and vs30 is not None:
+        # A mayor Vs30 (roca), menor amplificación. A menor Vs30 (barro), mayor.
+        # amp_factor oscila habitualmente entre -1.0 y 1.5. Lo normalizamos para el score de riesgo
+        efecto_sitio_mult = 1.0 + (amp_factor * 0.4)
+        
+    # Score combinado final de base (asumiendo estructura moderada por defecto 0.5)
+    # Para la calculadora interactiva general del mapa
+    score = round(hazard * (0.3 + 0.7 * (0.5 * efecto_sitio_mult)))
+    score = min(100, max(1, score))
+    
+    return {
+        'lat': lat,
+        'lon': lon,
+        'score': score,
+        'en_grilla': en_grilla,
+        'vs30': vs30,
+        'clase_sitio': clase_sitio,
+        'amp_factor': amp_factor,
+        'slab_prof_km': slab_prof,
+        'poligonos': poligonos_activos
+    }
+
+
+def generar_kml():
+    """Genera un archivo XML en el estándar oficial de KML de todos los polígonos."""
+    poligonos = get_poligonos()
+    kml = []
+    kml.append('<?xml version="1.0" encoding="UTF-8"?>')
+    kml.append('<kml xmlns="http://www.opengis.net/kml/2.2">')
+    kml.append('<Document>')
+    kml.append('  <name>Polígonos de Riesgo GeoCentro</name>')
+    kml.append('  <description>Capa de polígonos de riesgo sísmico y exposición</description>')
+    
+    for p in poligonos:
+        # KML color: aabbggrr -> convert from hex #rrggbb
+        # Si p['color'] es #ff5722 (rojo), en KML con opacidad 40% (64):
+        # 64 + 22 (azul/b) + 57 (verde/g) + ff (rojo/r) -> 642257ff
+        hex_col = p["color"].replace("#", "")
+        if len(hex_col) == 6:
+            r = hex_col[0:2]
+            g = hex_col[2:4]
+            b = hex_col[4:6]
+            kml_line_color = f"ff{b}{g}{r}"
+            kml_poly_color = f"64{b}{g}{r}" # 40% opacidad
+        else:
+            kml_line_color = "ff2257ff"
+            kml_poly_color = "642257ff"
+
+        kml.append('  <Placemark>')
+        kml.append(f'    <name>{p["nombre"]}</name>')
+        kml.append(f'    <description>{p["descripcion"]}</description>')
+        kml.append('    <Style>')
+        kml.append('      <LineStyle>')
+        kml.append(f'        <color>{kml_line_color}</color>')
+        kml.append('        <width>2</width>')
+        kml.append('      </LineStyle>')
+        kml.append('      <PolyStyle>')
+        kml.append(f'        <color>{kml_poly_color}</color>')
+        kml.append('      </PolyStyle>')
+        kml.append('    </Style>')
+        kml.append('    <ExtendedData>')
+        kml.append(f'      <Data name="peso"><value>{p["peso"]}</value></Data>')
+        kml.append(f'      <Data name="unidad"><value>{p["unidad"]}</value></Data>')
+        kml.append('    </ExtendedData>')
+        kml.append('    <Polygon>')
+        kml.append('      <outerBoundaryIs>')
+        kml.append('        <LinearRing>')
+        kml.append('          <coordinates>')
+        
+        coord_strings = []
+        for pt in p['puntos']:
+            coord_strings.append(f"{pt['lon']},{pt['lat']},0")
+        
+        # Cerrar el polígono si no está cerrado
+        if p['puntos'] and (p['puntos'][0]['lat'] != p['puntos'][-1]['lat'] or p['puntos'][0]['lon'] != p['puntos'][-1]['lon']):
+            coord_strings.append(f"{p['puntos'][0]['lon']},{p['puntos'][0]['lat']},0")
+            
+        kml.append("            " + " ".join(coord_strings))
+        kml.append('          </coordinates>')
+        kml.append('        </LinearRing>')
+        kml.append('      </outerBoundaryIs>')
+        kml.append('    </Polygon>')
+        kml.append('  </Placemark>')
+        
+    kml.append('</Document>')
+    kml.append('</kml>')
+    return "\n".join(kml)
+
+
+def importar_kml_data(xml_content):
+    """Parsea archivos KML y registra sus polígonos de forma transaccional."""
+    import xml.etree.ElementTree as ET
+    try:
+        # Si el contenido es binario
+        if isinstance(xml_content, bytes):
+            xml_content = xml_content.decode('utf-8', errors='ignore')
+        root = ET.fromstring(xml_content)
+    except Exception as e:
+        return False, f"XML malformado: {e}"
+        
+    ns = ""
+    if root.tag.startswith("{"):
+        ns = root.tag.split("}")[0] + "}"
+        
+    placemarks = root.findall(f".//{ns}Placemark")
+    if not placemarks:
+        return False, "No se encontraron elementos <Placemark> en el KML."
+        
+    poligonos_importados = 0
+    for pm in placemarks:
+        name_el = pm.find(f"{ns}name")
+        nombre = name_el.text if name_el is not None else f"Polígono KML {poligonos_importados + 1}"
+        
+        desc_el = pm.find(f"{ns}description")
+        descripcion = desc_el.text if desc_el is not None else ""
+        
+        coord_el = pm.find(f".//{ns}coordinates")
+        if coord_el is None or not coord_el.text.strip():
+            continue
+            
+        peso = 0.0
+        unidad = "Exposición"
+        color = "#ff5722"
+        
+        ext_data = pm.find(f"{ns}ExtendedData")
+        if ext_data is not None:
+            for data in ext_data.findall(f"{ns}Data"):
+                data_name = data.get("name")
+                val_el = data.find(f"{ns}value")
+                if val_el is not None and val_el.text:
+                    if data_name == "peso":
+                        try:
+                            peso = float(val_el.text)
+                        except ValueError:
+                            pass
+                    elif data_name == "unidad":
+                        unidad = val_el.text
+                        
+        style = pm.find(f".//{ns}Style")
+        if style is not None:
+            poly_style = style.find(f"{ns}PolyStyle")
+            if poly_style is not None:
+                color_el = poly_style.find(f"{ns}color")
+                if color_el is not None and color_el.text:
+                    kml_col = color_el.text.strip()
+                    # aabbggrr -> hex #rrggbb
+                    if len(kml_col) == 8:
+                        color = f"#{kml_col[6:8]}{kml_col[4:6]}{kml_col[2:4]}"
+                        
+        # Procesar vértices
+        pts_str = coord_el.text.strip().split()
+        puntos = []
+        for pt in pts_str:
+            parts = pt.split(",")
+            if len(parts) >= 2:
+                try:
+                    lon = float(parts[0])
+                    lat = float(parts[1])
+                    puntos.append((lat, lon))
+                except ValueError:
+                    continue
+                    
+        if len(puntos) >= 3:
+            if add_poligono(nombre, descripcion, peso, unidad, puntos, color):
+                poligonos_importados += 1
+                
+    return True, f"Se importaron {poligonos_importados} polígonos del KML con éxito."
+

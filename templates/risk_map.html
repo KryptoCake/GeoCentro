@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa de Riesgo Sísmico - GeoCentro{% blockend %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+    /* Estilos estructurales locales para el layout del Mapa de Riesgo */
+    .risk-layout {
+        display: flex;
+        height: calc(100vh - 70px); /* Ajustado a la cabecera */
+        overflow: hidden;
+        position: relative;
+    }
+    
+    #map-risk {
+        flex: 1;
+        height: 100%;
+        z-index: 1;
+        background: #121214;
+    }
+    
+    .risk-sidebar {
+        width: 380px;
+        background: #1a1a1e;
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        z-index: 10;
+        overflow-y: auto;
+        padding: 20px;
+        box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+    }
+    
+    @media (max-width: 768px) {
+        .risk-layout {
+            flex-direction: column;
+            height: auto;
+            overflow: visible;
+        }
+        #map-risk {
+            height: 400px;
+            width: 100%;
+        }
+        .risk-sidebar {
+            width: 100%;
+            height: auto;
+            border-left: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="risk-layout">
+    <!-- Contenedor del Mapa de Leaflet -->
+    <div id="map-risk"></div>
+    
+    <!-- Sidebar Lateral de Controles e Información -->
+    <aside class="risk-sidebar">
+        <div class="sidebar-header" style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
+            <h3 style="color: var(--text-primary); margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning-color);"></i> Cálculo Visual de Riesgo
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 8px 0 0 0;">
+                Haz clic en cualquier zona del mapa o coloca un marcador para evaluar el riesgo sísmico y geofísico en tiempo real.
+            </p>
+        </div>
+        
+        <!-- Buscador manual -->
+        <div class="sidebar-section card" style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.02);">
+            <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.9rem; color: var(--text-primary);">
+                <i class="fa-solid fa-search"></i> Buscar Coordenada
+            </h4>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input type="number" id="manual-lat" step="0.0001" placeholder="Latitud" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); background: #121214; color: #fff; font-size: 0.85rem;">
+                <input type="number" id="manual-lon" step="0.0001" placeholder="Longitud" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); background: #121214; color: #fff; font-size: 0.85rem;">
+            </div>
+            <button id="btn-eval-manual" class="btn btn-primary btn-block btn-sm" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="fa-solid fa-location-crosshairs"></i> Evaluar Coordenada
+            </button>
+        </div>
+        
+        <!-- Área de Resultados y Diagnóstico -->
+        <div class="sidebar-section" id="risk-info-default" style="text-align: center; padding: 40px 10px; color: var(--text-secondary);">
+            <i class="fa-solid fa-map-pin" style="font-size: 2.5rem; margin-bottom: 15px; color: rgba(255,255,255,0.15);"></i>
+            <p style="font-size: 0.9rem; line-height: 1.5;">Ningún punto seleccionado.<br>Haz clic en el mapa para colocar el marcador interactivo de análisis.</p>
+        </div>
+        
+        <div class="sidebar-section" id="risk-info-results" style="display: none;">
+            <!-- Gauge de Riesgo de Diseño Premium -->
+            <div class="gauge-wrapper" style="margin-bottom: 25px;">
+                <div class="gauge-container" style="width: 120px; height: 120px; margin: 0 auto; border: 8px solid rgba(255,255,255,0.05); border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);">
+                    <!-- Indicador visual circular (simulado) -->
+                    <div id="gauge-bar-risk" style="position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background: var(--warning-color); filter: blur(10px); opacity: 0.15; transition: all 0.4s ease; border-radius: 0 0 60px 60px;"></div>
+                    <div style="text-align: center; z-index: 2;">
+                        <span id="risk-val-badge" style="display: block; font-size: 1.8rem; font-weight: 700; color: #fff; line-height: 1;">0%</span>
+                        <span id="risk-label-badge" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-top: 4px; display: block; color: var(--text-secondary);">BAJO</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Coordenadas seleccionadas -->
+            <p style="font-size: 0.8rem; text-align: center; color: var(--text-secondary); margin-bottom: 20px;">
+                Analizando: <strong id="coords-text" style="color: #fff;">12.1300, -86.2500</strong>
+            </p>
+            
+            <!-- Diagnóstico Detallado -->
+            <div class="card" style="padding: 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+                <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
+                    <i class="fa-solid fa-circle-info"></i> Capas y Atributos Activos
+                </h4>
+                <ul id="risk-attributes-list" style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; line-height: 1.8; color: var(--text-primary);">
+                    <!-- Se llena dinámicamente -->
+                </ul>
+            </div>
+            
+            <div class="card" style="padding: 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+                <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
+                    <i class="fa-solid fa-file-waveform"></i> Informe Técnico
+                </h4>
+                <p id="risk-technical-desc" style="font-size: 0.85rem; line-height: 1.5; color: var(--text-secondary); margin: 0;">
+                    Cargando diagnóstico...
+                </p>
+            </div>
+        </div>
+        
+        <!-- Sección KML Interoperable -->
+        <div class="sidebar-section" style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px;">
+            <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.9rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-file-code" style="color: #64b5f6;"></i> Estándar de Intercambio KML
+            </h4>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Botón de Exportar -->
+                <a href="/api/poligonos/exportar-kml" class="btn btn-secondary btn-sm" style="display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; font-size: 0.85rem;">
+                    <i class="fa-solid fa-file-export"></i> Descargar Capas como KML
+                </a>
+                
+                <!-- Formulario de Importación -->
+                <form id="kml-import-form" enctype="multipart/form-data" style="margin-top: 5px;">
+                    <div style="position: relative; overflow: hidden; display: inline-block; width: 100%;">
+                        <button type="button" class="btn btn-block btn-sm" style="background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2); color: var(--text-secondary); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px;" id="btn-file-dummy">
+                            <i class="fa-solid fa-file-import"></i> Subir archivo KML (.kml)
+                        </button>
+                        <input type="file" id="kml-file-input" name="file" accept=".kml" style="position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                    </div>
+                    <div id="kml-upload-status" style="font-size: 0.75rem; text-align: center; margin-top: 5px; color: var(--text-secondary);"></div>
+                </form>
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/risk_map.js') }}?v=1.0.0"></script>
+{% endblock %}

@@ -215,6 +215,66 @@ def trigger_scrape():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/risk-map')
+def risk_map():
+    return render_template('risk_map.html')
+
+@app.route('/api/poligonos')
+def api_poligonos():
+    try:
+        polys = database.get_poligonos()
+        return jsonify(polys)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/poligonos/exportar-kml')
+def api_exportar_kml():
+    try:
+        kml_content = database.generar_kml()
+        return Response(
+            kml_content,
+            mimetype='application/vnd.google-earth.kml+xml',
+            headers={'Content-Disposition': 'attachment;filename=geocentro_poligonos.kml'}
+        )
+    except Exception as e:
+        return f"Error al exportar KML: {e}", 500
+
+@app.route('/api/poligonos/importar-kml', methods=['POST'])
+def api_importar_kml():
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No se cargó ningún archivo.'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'Archivo vacío o sin nombre.'}), 400
+    
+    try:
+        file_content = file.read()
+        success, message = database.importar_kml_data(file_content)
+        return jsonify({'success': success, 'message': message})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/riesgo/evaluar')
+def api_evaluar_riesgo():
+    lat_val = request.args.get('lat')
+    lon_val = request.args.get('lon')
+    
+    if not lat_val or not lon_val:
+        return jsonify({'error': 'Faltan parámetros de coordenadas lat y lon.'}), 400
+        
+    try:
+        lat = float(lat_val)
+        lon = float(lon_val)
+    except ValueError:
+        return jsonify({'error': 'Coordenadas lat/lon con formato numérico inválido.'}), 400
+        
+    try:
+        resultado = database.evaluar_punto(lat, lon)
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Running locally on port 5000
     app.run(debug=True, host='0.0.0.0', port=5000)
