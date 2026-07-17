@@ -92,5 +92,26 @@ Este archivo registra el historial de sesiones de desarrollo y los hitos alcanza
   * La aplicación local (`app.py`) levantó correctamente en el puerto 5000 sin fallos de importación.
 * **Sincronización:** Stage, commit y push de todos los archivos (`database.py`, `scraper.py`, `app.py`, `migrate_and_depurate.py` y bitácora de sesión) cerrando el track.
 
+---
+
+## Sesión: 17 de julio de 2026
+
+### 1. Sincronización Remota de GitHub
+* **Objetivo:** Subir los cambios de la sesión de deduplicación de base de datos (`50ec1d2..1bdc6ca`) al repositorio remoto.
+* **Implementación:** Realizado `git pull --rebase` y `git push origin main` con éxito para alinear las ramas de desarrollo y remota en GitHub.
+
+### 2. Integración de Módulo Prob_calc (Riesgo Sísmico y Régimen Tectónico)
+* **Objetivo:** Integrar la infraestructura matemática y de datos de riesgo sísmico generada en diseño con Claude Fable 5.
+* **Implementación:**
+  * **Dependencias:** Instalación en el Python del sistema y global del entorno virtual de las librerías `numpy`, `matplotlib`, `shapely`, `netCDF4` y `scipy`.
+  * **Estructura:** Creada la carpeta `Prob_calc` en la raíz e incorporados los 5 scripts del módulo (`config_grilla.py`, `descargar_datos.py`, `importar_kmz.py`, `enriquecer_celdas.py`, `test_sintetico.py`).
+  * **Corrección Windows/CP1252:** Modificada la línea 150 de `test_sintetico.py` para reemplazar el caracter unicode `\u2714` (✔) por `[OK]`, solventando el error de codificación de consola `UnicodeEncodeError`.
+  * **Gitignore:** Actualizado `.gitignore` para excluir la carpeta de datos temporal `Prob_calc/datos/`, los arrays binarios `Prob_calc/*.npz`, el archivo `Prob_calc/test_zonas.kmz` y las bases de datos SQLite sintéticas del track de pruebas.
+* **Pruebas y Verificación:**
+  * Se ejecutó `test_sintetico.py` desde el nuevo directorio del proyecto con éxito rotundo.
+  * **Suite de Aserciones:** Pasaron las 8 aserciones de prueba sintéticas (`T1-T8`) de rasterización, point-in-polygon Shapely con exclusión de huecos, clases de sitio NEHRP por Vs30, y clasificador del régimen tectónico (cortical/interfaz/intraslab) contra Slab2.
+* **Sincronización:** Stage, commit de todos los archivos fuente de `Prob_calc` y actualización del Conductor cerrando el track.
+
+
 
 
