@@ -112,6 +112,26 @@ Este archivo registra el historial de sesiones de desarrollo y los hitos alcanza
   * **Suite de Aserciones:** Pasaron las 8 aserciones de prueba sintéticas (`T1-T8`) de rasterización, point-in-polygon Shapely con exclusión de huecos, clases de sitio NEHRP por Vs30, y clasificador del régimen tectónico (cortical/interfaz/intraslab) contra Slab2.
 * **Sincronización:** Stage, commit de todos los archivos fuente de `Prob_calc` y actualización del Conductor cerrando el track.
 
+### 3. Implementación de Mapa de Riesgo Interactivo y Estándar KML
+* **Objetivo:** Desarrollar un mapa interactivo para el cálculo visual de riesgo y permitir la interoperabilidad (importación/exportación) con el estándar KML de Google Earth.
+* **Implementación:**
+  * **Base de Datos Relacional:** Agregada creación de tablas `poligonos` y `poligono_puntos` (vértices) en `init_db()`.
+  * **Precarga Demo:** Rutina integrada para precargar tres polígonos por defecto de Nicaragua (Managua fallas, León suelos y Masaya volcánico) si las tablas están vacías.
+  * **Algoritmos y KML:**
+    * Point-in-polygon robusto con `Shapely` en backend unificado con los lookups $O(1)$ de Vs30 y Slab2 de `Prob_calc`.
+    * Generador KML dinámico que exporta los metadatos cuantitativos/cualitativos (`peso`, `unidad`) en marcas `<ExtendedData>`.
+    * Parseador KML utilizando `xml.etree.ElementTree` tolerante a namespaces para importar polígonos de Google Earth en caliente a la base de datos.
+  * **Rutas Flask:** Rutas agregadas `/risk-map` y endpoints API `/api/poligonos`, `/api/poligonos/exportar-kml`, `/api/poligonos/importar-kml` y `/api/riesgo/evaluar`.
+  * **Frontend Estético:**
+    * Página `/risk-map` integrada en la navegación con cabecera base.
+    * Mapa Leaflet oscuro con control de capas dinámico para pintar polígonos y sismicidad reciente escalada por magnitud en el mapa.
+    * Pin interactivo de análisis arrastrable con actualización en caliente y sidebar lateral premium con gauge animado e informes técnicos.
+* **Pruebas y Verificación:**
+  * **Pruebas Unitarias:** Creado `test_risk_map.py` en scratch. Pasadas las 6 aserciones de prueba (`T1-T6`) de inicialización de tablas, precarga, point-in-polygon con Shapely y parseo/generación KML con éxito.
+  * **Servidor Flask:** Validada la estabilidad y arranque local en el puerto 5000 sin fallos de importación.
+* **Sincronización:** Stage y commit (`8a835cb`) de los 6 archivos modificados y nuevos de la feature.
+
+
 
 
 

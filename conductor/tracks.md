@@ -15,6 +15,6 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./tracks/risk_prob_calc_20260717/](./tracks/risk_prob_calc_20260717/)*
   *Plan Fuente: Ejercicio de diseño con Claude Fable 5*
 
-- [ ] **Track: Mapa de Riesgo Sísmico Interactivo con Estándar KML** [checkpoint-pre: 998465d]
+- [x] **Track: Mapa de Riesgo Sísmico Interactivo con Estándar KML** [checkpoint-pre: 998465d, checkpoint-post: 8a835cb]
   *Link: [./tracks/risk_kml_map_20260717/](./tracks/risk_kml_map_20260717/)*
   *Plan Fuente: Requerimiento del usuario y estándar KML*
