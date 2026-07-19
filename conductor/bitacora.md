@@ -131,6 +131,14 @@ Este archivo registra el historial de sesiones de desarrollo y los hitos alcanza
   * **Servidor Flask:** Validada la estabilidad y arranque local en el puerto 5000 sin fallos de importación.
 * **Sincronización:** Stage y commit (`8a835cb`) de los 6 archivos modificados y nuevos de la feature.
 
+### 4. Corrección de QA (TemplateSyntaxError en Jinja2)
+* **Objetivo:** Resolver el error de renderizado 500 que impedía cargar la página `/risk-map`.
+* **Implementación:**
+  * **Corrección:** Corregido el bloque de título en [risk_map.html](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/templates/risk_map.html#L3) reemplazando la etiqueta inválida `{% blockend %}` por la etiqueta estándar `{% endblock %}` de Jinja2.
+  * **Verificación:** Levantado el servidor web de forma local y verificado con `read_url_content` que la página `/risk-map` ahora renderiza correctamente (código HTTP 200).
+* **Sincronización:** Stage, commit (`90424ff`) y push a GitHub.
+
+
 
 
 
