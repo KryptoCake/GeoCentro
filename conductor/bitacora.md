@@ -138,6 +138,14 @@ Este archivo registra el historial de sesiones de desarrollo y los hitos alcanza
   * **Verificación:** Levantado el servidor web de forma local y verificado con `read_url_content` que la página `/risk-map` ahora renderiza correctamente (código HTTP 200).
 * **Sincronización:** Stage, commit (`90424ff`) y push a GitHub.
 
+### 5. Corrección de QA (Carga de JavaScript y Robustez Null-Safety)
+* **Objetivo:** Resolver la inactividad de los eventos de clic en el mapa y la calculadora interactiva por falta de carga de scripts, y asegurar la robustez de los datos.
+* **Implementación:**
+  * **Carga de Script:** Corregido el nombre del bloque de scripts al final de [risk_map.html](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/templates/risk_map.html#L163) cambiándolo de `extra_scripts` a `scripts` para que coincida exactamente con la directiva `{% block scripts %}` de [base.html](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/templates/base.html#L95) y el navegador cargue el JS correspondiente.
+  * **Robustez Null-Safety:** Modificadas las líneas 96 y 300 de [risk_map.js](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/static/js/risk_map.js) para proteger el formateo de `p.peso.toLocaleString()` contra valores nulos/indefinidos (ej. polígonos importados de KMLs de terceros sin ExtendedData), previniendo excepciones JS silenciosas que congelaban el hilo principal en el cliente.
+* **Sincronización:** Stage, commit (`c8f54a9`) y push a GitHub.
+
+
 
 
 
