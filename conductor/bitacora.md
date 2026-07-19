@@ -145,6 +145,14 @@ Este archivo registra el historial de sesiones de desarrollo y los hitos alcanza
   * **Robustez Null-Safety:** Modificadas las líneas 96 y 300 de [risk_map.js](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/static/js/risk_map.js) para proteger el formateo de `p.peso.toLocaleString()` contra valores nulos/indefinidos (ej. polígonos importados de KMLs de terceros sin ExtendedData), previniendo excepciones JS silenciosas que congelaban el hilo principal en el cliente.
 * **Sincronización:** Stage, commit (`c8f54a9`) y push a GitHub.
 
+### 6. Corrección de QA (Visibilidad del Mapa y Sanitización de NaN)
+* **Objetivo:** Resolver la invisibilidad del mapa por bloque Jinja2 huérfano y corregir el error latente de serialización de NaN en el endpoint de evaluación.
+* **Implementación:**
+  * **Visualización del Mapa:** Añadido `{% block extra_head %}{% endblock %}` en el `<head>` de [base.html](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/templates/base.html#L26) y removida la carga duplicada de Leaflet en [risk_map.html](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/templates/risk_map.html#L5). Esto permite que Jinja2 inyecte el CSS estructurado de la plantilla hija en el head, otorgando una altura y flex al contenedor `#map-risk` en el navegador.
+  * **Sanitización de NaN:** Añadido un helper de conversión numérica `_num()` en la función `evaluar_punto` de [database.py](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/database.py#L1001) para interceptar valores `NaN` de pandas/scipy (como `slab_prof_km` o `vs30` en zonas sin cobertura o fuera de grilla) y normalizarlos a `None` (representado como `null` en JSON), previniendo excepciones de parseo en el navegador.
+* **Sincronización:** Stage, commit (`de09a02`) y push a GitHub.
+
+
 
 
 
