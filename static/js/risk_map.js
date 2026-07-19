@@ -93,6 +93,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                         
                         // Formatear popup estético
+                        const pesoVal = (p.peso !== null && p.peso !== undefined) ? p.peso.toLocaleString() : '0';
+                        const unidadVal = p.unidad || 'Exposición';
                         const popupContent = `
                             <div style="font-family: inherit; color: #fff; min-width: 180px; padding: 5px;">
                                 <h4 style="margin: 0 0 8px 0; color: ${p.color || '#ff5722'}; font-size: 0.95rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">
@@ -102,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     ${p.descripcion || 'Sin descripción'}
                                 </p>
                                 <div style="font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 6px; border-radius: 4px;">
-                                    <strong>Carga/Exposición:</strong> ${p.peso.toLocaleString()} ${p.unidad}
+                                    <strong>Carga/Exposición:</strong> ${pesoVal} ${unidadVal}
                                 </div>
                             </div>
                         `;
@@ -294,10 +296,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Polígonos intersectados
                 if (res.poligonos && res.poligonos.length > 0) {
                     res.poligonos.forEach(p => {
+                        const pesoVal = (p.peso !== null && p.peso !== undefined) ? p.peso.toLocaleString() : '0';
+                        const unidadVal = p.unidad || 'Exposición';
                         attrHTML += `<li style="border-left: 3px solid ${p.color}; padding-left: 8px; margin-top: 5px; background: rgba(255,255,255,0.02); border-radius: 0 4px 4px 0; padding: 4px 8px;">
                             <i class="fa-solid fa-draw-polygon" style="color: ${p.color};"></i> 
                             <strong>${p.nombre}</strong><br>
-                            <span style="font-size: 0.75rem; color: var(--text-secondary);">${p.peso.toLocaleString()} ${p.unidad}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary);">${pesoVal} ${unidadVal}</span>
                         </li>`;
                     });
                 } else {
