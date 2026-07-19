@@ -1001,10 +1001,21 @@ def evaluar_punto(lat, lon):
         idx = int(CG.indice_celda(lat, lon))
         if idx != -1 and grilla is not None and idx in grilla:
             celda_data = grilla[idx]
-            vs30 = celda_data.get('vs30_ms')
-            clase_sitio = celda_data.get('clase_sitio', '?')
-            amp_factor = celda_data.get('amp_factor', 0.0)
-            slab_prof = celda_data.get('slab_prof_km')
+            # Las celdas fuera de cobertura traen NaN (p.ej. slab_prof_km fuera
+            # de la zona de subducción); NaN no es JSON válido y rompe el fetch
+            # del navegador, así que se normaliza a None/valores neutros.
+            def _num(v, default=None):
+                try:
+                    f = float(v)
+                except (TypeError, ValueError):
+                    return default
+                return default if math.isnan(f) else f
+
+            vs30 = _num(celda_data.get('vs30_ms'))
+            clase = celda_data.get('clase_sitio')
+            clase_sitio = clase if isinstance(clase, str) else '?'
+            amp_factor = _num(celda_data.get('amp_factor'), 0.0)
+            slab_prof = _num(celda_data.get('slab_prof_km'))
             en_grilla = True
     except Exception as e:
         print(f"Error al consultar grilla Prob_calc: {e}")
