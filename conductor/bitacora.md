@@ -152,6 +152,22 @@ Este archivo registra el historial de sesiones de desarrollo y los hitos alcanza
   * **Sanitización de NaN:** Añadido un helper de conversión numérica `_num()` en la función `evaluar_punto` de [database.py](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/database.py#L1001) para interceptar valores `NaN` de pandas/scipy (como `slab_prof_km` o `vs30` en zonas sin cobertura o fuera de grilla) y normalizarlos a `None` (representado como `null` en JSON), previniendo excepciones de parseo en el navegador.
 * **Sincronización:** Stage, commit (`de09a02`) y push a GitHub.
 
+---
+
+## Sesión: 28 de julio de 2026
+
+### 1. Sincronización de Repositorio y Git Rebase
+* **Objetivo:** Subir los últimos parches de consistencia del mapa e integrar cambios remotos.
+* **Implementación:** Sincronizado el repositorio mediante `git pull --rebase` para integrar los commits remotos externos de forma limpia y realizado `git push` del commit local.
+
+### 2. Consistencia de Leyendas de Riesgo y Versión de Assets
+* **Objetivo:** Alinear los umbrales descriptivos del panel lateral con el gauge de la UI y forzar refresco de caché.
+* **Implementación:**
+  * **Coherencia de Leyendas:** Modificado [risk_map.js](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/static/js/risk_map.js#L335-L343) para alinear la conclusión descriptiva de riesgo con los mismos umbrales del gauge (75/50/25) y agregada la descripción para el rango de "Riesgo Moderado" que faltaba en el texto técnico.
+  * **Cache-Busting:** Modificada la importación del script a `risk_map.js?v=1.0.1` en [risk_map.html](file:///c:/Users/PC/Documents/Proyectos_nuevos/GeoCentro/templates/risk_map.html#L160) para forzar al navegador a descartar versiones cacheadas del script viejo.
+* **Sincronización:** Stage, commit (`8382f41` rebasado a `5bc8e43`) y push a GitHub.
+
+
 
 
 
