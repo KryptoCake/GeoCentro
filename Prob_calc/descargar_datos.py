@@ -43,9 +43,8 @@ LON_MIN, LON_MAX = -95.5, -79.5
 
 SCIENCEBASE_API = "https://www.sciencebase.gov/catalog/items"
 SLAB2_PARENT = "5aa1b00ee4b0b1c392e86467"
+VS30_GRD_URL = "https://apps.usgs.gov/shakemap_geodata/vs30/global_vs30.grd"
 VS30_ZIP_URL = "https://earthquake.usgs.gov/static/lfs/data/global_vs30_grd.zip"
-# ^ Si esta URL directa cambia, la página índice es:
-#   https://earthquake.usgs.gov/data/vs30/  ("Download GMT grd file ... 631 MB ZIP")
 
 
 def descargar(url, destino, descripcion):
@@ -55,7 +54,8 @@ def descargar(url, destino, descripcion):
         return destino
     print(f"[descarga] {descripcion}\n  {url}")
     tmp = destino + ".part"
-    with requests.get(url, stream=True, timeout=120) as r:
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    with requests.get(url, stream=True, timeout=120, headers=headers) as r:
         r.raise_for_status()
         total = int(r.headers.get("content-length", 0))
         bajado = 0
@@ -78,9 +78,11 @@ def descargar_slab2():
     """Localiza el ítem hijo de la región CAM y baja la grilla de
     profundidad (cam_slab2_dep_*.grd) y, si existe, la de espesor."""
     print("\n=== Slab2 (Central America / placa de Cocos) ===")
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     r = requests.get(SCIENCEBASE_API,
                      params={"parentId": SLAB2_PARENT, "format": "json",
                              "max": 100, "fields": "title,files"},
+                     headers=headers,
                      timeout=60)
     r.raise_for_status()
     items = r.json().get("items", [])
@@ -153,31 +155,53 @@ def convertir_slab2_a_npz(ruta_grd):
 # ----------------------------------------------------------------------
 
 def descargar_vs30(limpiar=False):
-    print("\n=== Vs30 global (Heath et al. 2020) — ZIP ~631 MB ===")
+    print("\n=== Vs30 global (Heath et al. 2020) — GMT GRD ~582 MB ===")
+    grd_path = os.path.join(FUENTES, "global_vs30.grd")
     zip_path = os.path.join(FUENTES, "global_vs30_grd.zip")
-    try:
-        descargar(VS30_ZIP_URL, zip_path, "Vs30 global (grd)")
-    except requests.HTTPError as e:
-        sys.exit(f"[error] {e}\nLa URL directa pudo cambiar. Descarga manual "
-                 "desde https://earthquake.usgs.gov/data/vs30/ y coloca el "
-                 f"ZIP en {zip_path}, luego reejecuta.")
-    print("[vs30] extrayendo .grd del ZIP...")
-    with zipfile.ZipFile(zip_path) as zf:
-        grds = [n for n in zf.namelist() if n.endswith(".grd")]
-        if not grds:
-            sys.exit("[error] el ZIP no contiene .grd")
-        zf.extract(grds[0], FUENTES)
-        ruta_grd = os.path.join(FUENTES, grds[0])
+    
+    if not os.path.exists(grd_path):
+        try:
+            descargar(VS30_GRD_URL, grd_path, "Vs30 global (grd directo)")
+        except Exception as e:
+            print(f"[aviso] Descarga directa de GRD falló ({e}), intentando ZIP legacy...")
+            try:
+                descargar(VS30_ZIP_URL, zip_path, "Vs30 global (ZIP)")
+                print("[vs30] extrayendo .grd del ZIP...")
+                with zipfile.ZipFile(zip_path) as zf:
+                    grds = [n for n in zf.namelist() if n.endswith(".grd")]
+                    if not grds:
+                        sys.exit("[error] el ZIP no contiene .grd")
+                    zf.extract(grds[0], FUENTES)
+                    extracted = os.path.join(FUENTES, grds[0])
+                    if extracted != grd_path:
+                        os.rename(extracted, grd_path)
+            except requests.HTTPError as err:
+                sys.exit(f"[error] {err}\nLa URL directa pudo cambiar. Descarga manual "
+                         "desde https://earthquake.usgs.gov/data/vs30/ y coloca "
+                         f"global_vs30.grd en {grd_path}, luego reejecuta.")
+
+    ruta_grd = grd_path
 
     from netCDF4 import Dataset
     ds = Dataset(ruta_grd)
-    lon = np.array(ds.variables["x"][:], dtype=float)
-    lat = np.array(ds.variables["y"][:], dtype=float)
+    
+    def var(*names):
+        for n in names:
+            if n in ds.variables:
+                return ds.variables[n]
+        raise KeyError(f"ninguna de {names} en {list(ds.variables.keys())}")
+        
+    var_lon = var("lon", "x")
+    var_lat = var("lat", "y")
+    var_z = var("z", "vs30")
+
+    lon = np.array(var_lon[:], dtype=float)
+    lat = np.array(var_lat[:], dtype=float)
     sel_lat = np.where((lat >= LAT_MIN) & (lat <= LAT_MAX))[0]
     sel_lon = np.where((lon >= LON_MIN) & (lon <= LON_MAX))[0]
     # leer SOLO la ventana (el grd global es enorme; no cargarlo entero)
-    vs30 = np.array(ds.variables["z"][sel_lat.min():sel_lat.max() + 1,
-                                      sel_lon.min():sel_lon.max() + 1],
+    vs30 = np.array(var_z[sel_lat.min():sel_lat.max() + 1,
+                          sel_lon.min():sel_lon.max() + 1],
                     dtype=np.float32)
     salida = os.path.join(DATOS, "vs30_ca.npz")
     np.savez_compressed(salida, lat=lat[sel_lat], lon=lon[sel_lon],
@@ -186,8 +210,10 @@ def descargar_vs30(limpiar=False):
     print(f"[vs30] -> {salida}  ({vs30.shape}, "
           f"{np.nanmin(vs30):.0f}-{np.nanmax(vs30):.0f} m/s)")
     if limpiar:
-        os.remove(zip_path)
-        os.remove(ruta_grd)
+        if os.path.exists(zip_path):
+            os.remove(zip_path)
+        if os.path.exists(ruta_grd):
+            os.remove(ruta_grd)
         print("[vs30] fuentes globales eliminadas (--limpiar)")
 
 
