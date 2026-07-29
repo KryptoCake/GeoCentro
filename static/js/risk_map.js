@@ -335,11 +335,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     desc += `Existe un peligro sísmico de fondo dominante por la placa de subducción de Cocos, localizada a unos <strong>${Math.abs(res.slab_prof_km).toFixed(1)} km</strong> de profundidad bajo la corteza. `;
                 }
                 
-                // Conclusión por nivel
+                // Conclusión por nivel — mismos umbrales que el badge del gauge (75/50/25)
                 if (score >= 75) {
-                    desc += `<br><br><span style="color: #f44336; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> Zona crítica de alta vulnerabilidad. Se recomienda evitar construcciones de mampostería no reforzada o adobe en esta región.</span>`;
+                    desc += `<br><br><span style="color: #f44336; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> Riesgo muy alto: zona crítica de alta vulnerabilidad. Se recomienda evitar construcciones de mampostería no reforzada o adobe en esta región.</span>`;
                 } else if (score >= 50) {
-                    desc += `<br><br><span style="color: #ff5722; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> Peligro moderado-alto. Se recomiendan inspecciones estructurales preventivas periódicas.</span>`;
+                    desc += `<br><br><span style="color: #ff5722; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> Riesgo alto. Se recomiendan inspecciones estructurales preventivas periódicas.</span>`;
+                } else if (score >= 25) {
+                    desc += `<br><br><span style="color: #ffb300; font-weight: 600;"><i class="fa-solid fa-circle-exclamation"></i> Riesgo moderado. Las vibraciones esperadas son tolerables para estructuras en buen estado, pero conviene verificar el cumplimiento de la norma sísmica local.</span>`;
                 } else {
                     desc += `<br><br><span style="color: #4caf50; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> El riesgo estimado en el punto es bajo. Las vibraciones esperadas no deberían generar daños estructurales mayores.</span>`;
                 }
