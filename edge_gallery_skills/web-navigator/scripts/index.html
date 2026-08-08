@@ -3,8 +3,23 @@
 <head><meta charset="utf-8"><title>web-navigator</title></head>
 <body>
 <script>
-const MAX_PAGE_CHARS = 8000;
-const MAX_RESULTS = 6;
+// Small on-device models (Gemma 4 E2B/E4B) have tight context windows;
+// oversized tool results make generation collapse mid-answer.
+const MAX_PAGE_CHARS = 2500;
+const MAX_RESULTS = 5;
+
+// Strips markdown noise that wastes tokens: images, link URLs, data URIs,
+// repeated blank lines. Keeps the readable text.
+function cleanMarkdown(text) {
+  return text
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')            // images
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')          // [text](url) -> text
+    .replace(/data:[a-z]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '') // data URIs
+    .replace(/https?:\/\/\S{60,}/g, '')               // very long bare URLs
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 // Detects which search provider a key belongs to. Explicit prefixes
 // ("serpapi:KEY", "serper:KEY", "jina:KEY") always win; otherwise:
@@ -98,7 +113,10 @@ async function readPage(url, secret) {
   if (!/^https?:\/\//i.test(url)) {
     throw new Error('Invalid URL: "' + url + '". It must start with http:// or https://');
   }
-  const headers = { 'X-Return-Format': 'markdown' };
+  const headers = {
+    'X-Return-Format': 'markdown',
+    'X-Retain-Images': 'none'
+  };
   const p = detectProvider(secret);
   if (p.provider === 'jina') headers['Authorization'] = 'Bearer ' + p.key;
   const resp = await fetch('https://r.jina.ai/' + url, { method: 'GET', headers: headers });
@@ -106,12 +124,11 @@ async function readPage(url, secret) {
     throw new Error('Page reader returned HTTP ' + resp.status + ' for ' + url +
       '. The page may be down, blocked, or rate-limited; try again or try another URL.');
   }
-  let text = await resp.text();
+  let text = cleanMarkdown(await resp.text());
   if (text.length > MAX_PAGE_CHARS) {
-    text = text.slice(0, MAX_PAGE_CHARS) +
-      '\n\n[... content truncated at ' + MAX_PAGE_CHARS + ' characters ...]';
+    text = text.slice(0, MAX_PAGE_CHARS) + '\n[...truncated...]';
   }
-  return 'PAGE CONTENT of ' + url + ':\n\n' + text;
+  return 'PAGE CONTENT of ' + url + ' (summarize this for the user):\n\n' + text;
 }
 
 window['ai_edge_gallery_get_result'] = async (dataStr, secret) => {

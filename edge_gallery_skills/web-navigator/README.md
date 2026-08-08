@@ -53,5 +53,5 @@ web-navigator/
 ## Limitaciones conocidas
 
 - Los modelos de 2–4B a veces formatean mal la llamada a la herramienta; si falla, reformula el prompt («busca en la web: ...»).
-- El contenido de páginas se trunca a ~8,000 caracteres para no desbordar el contexto del modelo.
+- El contenido de páginas se limpia (sin imágenes ni URLs de enlaces) y se trunca a ~2,500 caracteres para no desbordar el contexto del modelo. **Importante:** en los ajustes del modelo dentro de Edge Gallery (ícono de controles arriba a la derecha), sube el *max tokens / context length* al máximo disponible — con el valor por defecto, la lectura de páginas puede cortar la respuesta a mitad de frase.
 - Sin conexión a internet la skill devuelve error (los modelos siguen funcionando offline, pero sin web).
