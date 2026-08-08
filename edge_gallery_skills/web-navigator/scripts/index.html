@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>web-navigator</title></head>
+<body>
+<script>
+const MAX_PAGE_CHARS = 8000;
+const MAX_RESULTS = 6;
+
+function isJinaKey(secret) {
+  return typeof secret === 'string' && secret.trim().startsWith('jina_');
+}
+
+async function searchWithSerper(query, gl, hl, secret) {
+  const resp = await fetch('https://google.serper.dev/search', {
+    method: 'POST',
+    headers: {
+      'X-API-KEY': secret.trim(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ q: query, num: MAX_RESULTS, gl: gl, hl: hl })
+  });
+  if (!resp.ok) {
+    throw new Error('Serper API returned HTTP ' + resp.status +
+      '. Check that your Serper API key is valid and has remaining credits (https://serper.dev).');
+  }
+  const json = await resp.json();
+  const lines = [];
+  if (json.answerBox) {
+    const ab = json.answerBox;
+    const answer = ab.answer || ab.snippet || '';
+    if (answer) lines.push('DIRECT ANSWER: ' + answer + (ab.link ? ' (source: ' + ab.link + ')' : ''));
+  }
+  if (json.knowledgeGraph) {
+    const kg = json.knowledgeGraph;
+    const desc = [kg.title, kg.type, kg.description].filter(Boolean).join(' — ');
+    if (desc) lines.push('KNOWLEDGE: ' + desc);
+  }
+  const organic = (json.organic || []).slice(0, MAX_RESULTS);
+  organic.forEach((r, i) => {
+    lines.push((i + 1) + '. ' + (r.title || '(no title)') + '\n   URL: ' + (r.link || '') +
+      '\n   ' + (r.snippet || ''));
+  });
+  if (lines.length === 0) return 'No results found for: ' + query;
+  return 'SEARCH RESULTS for "' + query + '":\n\n' + lines.join('\n\n');
+}
+
+async function searchWithJina(query, secret) {
+  const resp = await fetch('https://s.jina.ai/?q=' + encodeURIComponent(query), {
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + secret.trim(),
+      'Accept': 'application/json',
+      'X-Respond-With': 'no-content'
+    }
+  });
+  if (!resp.ok) {
+    throw new Error('Jina Search returned HTTP ' + resp.status +
+      '. Check that your Jina API key is valid and has remaining tokens (https://jina.ai).');
+  }
+  const json = await resp.json();
+  const items = (json.data || []).slice(0, MAX_RESULTS);
+  if (items.length === 0) return 'No results found for: ' + query;
+  const lines = items.map((r, i) =>
+    (i + 1) + '. ' + (r.title || '(no title)') + '\n   URL: ' + (r.url || '') +
+    '\n   ' + (r.description || ''));
+  return 'SEARCH RESULTS for "' + query + '":\n\n' + lines.join('\n\n');
+}
+
+async function readPage(url, secret) {
+  if (!/^https?:\/\//i.test(url)) {
+    throw new Error('Invalid URL: "' + url + '". It must start with http:// or https://');
+  }
+  const headers = { 'X-Return-Format': 'markdown' };
+  if (isJinaKey(secret)) headers['Authorization'] = 'Bearer ' + secret.trim();
+  const resp = await fetch('https://r.jina.ai/' + url, { method: 'GET', headers: headers });
+  if (!resp.ok) {
+    throw new Error('Page reader returned HTTP ' + resp.status + ' for ' + url +
+      '. The page may be down, blocked, or rate-limited; try again or try another URL.');
+  }
+  let text = await resp.text();
+  if (text.length > MAX_PAGE_CHARS) {
+    text = text.slice(0, MAX_PAGE_CHARS) +
+      '\n\n[... content truncated at ' + MAX_PAGE_CHARS + ' characters ...]';
+  }
+  return 'PAGE CONTENT of ' + url + ':\n\n' + text;
+}
+
+window['ai_edge_gallery_get_result'] = async (dataStr, secret) => {
+  try {
+    let data;
+    try {
+      data = JSON.parse(dataStr);
+    } catch (e) {
+      return JSON.stringify({ error: 'Invalid JSON in data payload: ' + e.message });
+    }
+    const action = (data.action || '').toLowerCase();
+
+    if (action === 'search') {
+      if (!data.query) return JSON.stringify({ error: 'Missing required field "query" for search action.' });
+      if (!secret) {
+        return JSON.stringify({ error: 'No API key configured. Add a Serper key (https://serper.dev) or Jina key (https://jina.ai) in the skill settings.' });
+      }
+      const gl = data.gl || 'ni';
+      const hl = data.hl || 'es';
+      const result = isJinaKey(secret)
+        ? await searchWithJina(data.query, secret)
+        : await searchWithSerper(data.query, gl, hl, secret);
+      return JSON.stringify({ result: result });
+    }
+
+    if (action === 'read') {
+      if (!data.url) return JSON.stringify({ error: 'Missing required field "url" for read action.' });
+      const result = await readPage(data.url, secret);
+      return JSON.stringify({ result: result });
+    }
+
+    return JSON.stringify({ error: 'Unknown action "' + data.action + '". Use "search" or "read".' });
+  } catch (e) {
+    let msg = e && e.message ? e.message : String(e);
+    if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+      msg += ' — The request was blocked before reaching the server (no network, or the API does not allow browser/webview requests). If this persists with Serper, switch to a Jina API key (starts with "jina_"), which supports browser requests.';
+    }
+    return JSON.stringify({ error: msg });
+  }
+};
+</script>
+</body>
+</html>
