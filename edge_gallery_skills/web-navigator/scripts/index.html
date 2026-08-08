@@ -109,26 +109,74 @@ async function searchWithJina(query, secret) {
   return 'SEARCH RESULTS for "' + query + '":\n\n' + lines.join('\n\n');
 }
 
+// Reader 1: Serper's scrape endpoint (same domain family as its search,
+// which is known to work from the Gallery webview).
+async function readWithSerperScrape(url, key) {
+  const resp = await fetch('https://scrape.serper.dev', {
+    method: 'POST',
+    headers: { 'X-API-KEY': key, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: url })
+  });
+  if (!resp.ok) throw new Error('Serper scrape HTTP ' + resp.status);
+  const json = await resp.json();
+  const text = json.markdown || json.text || '';
+  if (!text) throw new Error('Serper scrape returned empty content');
+  return text;
+}
+
+// Reader 2: Jina Reader (with key if available, keyless otherwise).
+async function readWithJina(url, jinaKey) {
+  const headers = { 'X-Return-Format': 'markdown', 'X-Retain-Images': 'none' };
+  if (jinaKey) headers['Authorization'] = 'Bearer ' + jinaKey;
+  const resp = await fetch('https://r.jina.ai/' + url, { method: 'GET', headers: headers });
+  if (!resp.ok) throw new Error('Jina Reader HTTP ' + resp.status);
+  return await resp.text();
+}
+
+// Reader 3: direct fetch + naive HTML-to-text (works only if the target
+// site allows webview requests, but costs nothing to try last).
+async function readDirect(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('Direct fetch HTTP ' + resp.status);
+  const html = await resp.text();
+  const text = html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  if (!text) throw new Error('Direct fetch returned empty content');
+  return text;
+}
+
 async function readPage(url, secret) {
   if (!/^https?:\/\//i.test(url)) {
     throw new Error('Invalid URL: "' + url + '". It must start with http:// or https://');
   }
-  const headers = {
-    'X-Return-Format': 'markdown',
-    'X-Retain-Images': 'none'
-  };
   const p = detectProvider(secret);
-  if (p.provider === 'jina') headers['Authorization'] = 'Bearer ' + p.key;
-  const resp = await fetch('https://r.jina.ai/' + url, { method: 'GET', headers: headers });
-  if (!resp.ok) {
-    throw new Error('Page reader returned HTTP ' + resp.status + ' for ' + url +
-      '. The page may be down, blocked, or rate-limited; try again or try another URL.');
+  const attempts = [];
+  if (p.provider === 'serper' && p.key) attempts.push(() => readWithSerperScrape(url, p.key));
+  attempts.push(() => readWithJina(url, p.provider === 'jina' ? p.key : null));
+  attempts.push(() => readDirect(url));
+
+  const failures = [];
+  let raw = null;
+  for (const attempt of attempts) {
+    try { raw = await attempt(); break; }
+    catch (e) { failures.push(e && e.message ? e.message : String(e)); }
   }
-  let text = cleanMarkdown(await resp.text());
+  if (raw === null) {
+    throw new Error('Could not read ' + url + ' (' + failures.join('; ') +
+      '). Tell the user the page could not be read and suggest trying another URL.');
+  }
+  let text = cleanMarkdown(raw);
   if (text.length > MAX_PAGE_CHARS) {
     text = text.slice(0, MAX_PAGE_CHARS) + '\n[...truncated...]';
   }
-  return 'PAGE CONTENT of ' + url + ' (summarize this for the user):\n\n' + text;
+  return 'PAGE CONTENT of ' + url + ':\n\n' + text +
+    '\n\nNow write the summary for the user in their language. Do not call any more tools.';
 }
 
 window['ai_edge_gallery_get_result'] = async (dataStr, secret) => {

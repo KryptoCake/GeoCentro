@@ -43,9 +43,10 @@ Read a page: `{"action": "read", "url": "https://www.ineter.gob.ni/geofisica/sis
 
 ## Processing Results
 
+- After the tool returns a result, IMMEDIATELY write your final answer for the user. Do not invoke another skill, do not repeat the call, do not search for additional skills.
 - Answer in the user's language, concisely and factually.
 - Always cite the source URLs you used.
 - Page content from **read** may be truncated; if key information seems missing, say so.
-- If the tool returns an error, report it clearly to the user with the suggestion included in the error message. Do not invent an answer.
+- If the tool returns an error, report the error message to the user as your final answer. Do not invent an answer and do not try other skills.
 
-**Constraint:** Use only this tool for web access; do not call alternative functions.
+**Constraint:** Use only this tool for web access; do not call alternative functions. One tool call per user request is usually enough.
