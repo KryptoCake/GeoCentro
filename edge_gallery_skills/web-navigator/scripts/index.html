@@ -6,15 +6,46 @@
 const MAX_PAGE_CHARS = 8000;
 const MAX_RESULTS = 6;
 
-function isJinaKey(secret) {
-  return typeof secret === 'string' && secret.trim().startsWith('jina_');
+// Detects which search provider a key belongs to. Explicit prefixes
+// ("serpapi:KEY", "serper:KEY", "jina:KEY") always win; otherwise:
+// jina_... -> Jina, 64-char hex -> SerpAPI, anything else -> Serper.
+function detectProvider(secret) {
+  const s = (secret || '').trim();
+  const m = s.match(/^(serpapi|serper|jina):(.+)$/i);
+  if (m) return { provider: m[1].toLowerCase(), key: m[2].trim() };
+  if (s.startsWith('jina_')) return { provider: 'jina', key: s };
+  if (/^[0-9a-f]{64}$/i.test(s)) return { provider: 'serpapi', key: s };
+  return { provider: 'serper', key: s };
 }
 
-async function searchWithSerper(query, gl, hl, secret) {
+function isJinaKey(secret) {
+  return detectProvider(secret).provider === 'jina';
+}
+
+function formatGoogleResults(query, answerBox, knowledgeGraph, organic) {
+  const lines = [];
+  if (answerBox) {
+    const answer = answerBox.answer || answerBox.snippet || '';
+    if (answer) lines.push('DIRECT ANSWER: ' + answer + (answerBox.link ? ' (source: ' + answerBox.link + ')' : ''));
+  }
+  if (knowledgeGraph) {
+    const desc = [knowledgeGraph.title, knowledgeGraph.type, knowledgeGraph.description]
+      .filter(Boolean).join(' — ');
+    if (desc) lines.push('KNOWLEDGE: ' + desc);
+  }
+  (organic || []).slice(0, MAX_RESULTS).forEach((r, i) => {
+    lines.push((i + 1) + '. ' + (r.title || '(no title)') + '\n   URL: ' + (r.link || '') +
+      '\n   ' + (r.snippet || ''));
+  });
+  if (lines.length === 0) return 'No results found for: ' + query;
+  return 'SEARCH RESULTS for "' + query + '":\n\n' + lines.join('\n\n');
+}
+
+async function searchWithSerper(query, gl, hl, key) {
   const resp = await fetch('https://google.serper.dev/search', {
     method: 'POST',
     headers: {
-      'X-API-KEY': secret.trim(),
+      'X-API-KEY': key,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ q: query, num: MAX_RESULTS, gl: gl, hl: hl })
@@ -24,24 +55,21 @@ async function searchWithSerper(query, gl, hl, secret) {
       '. Check that your Serper API key is valid and has remaining credits (https://serper.dev).');
   }
   const json = await resp.json();
-  const lines = [];
-  if (json.answerBox) {
-    const ab = json.answerBox;
-    const answer = ab.answer || ab.snippet || '';
-    if (answer) lines.push('DIRECT ANSWER: ' + answer + (ab.link ? ' (source: ' + ab.link + ')' : ''));
+  return formatGoogleResults(query, json.answerBox, json.knowledgeGraph, json.organic);
+}
+
+async function searchWithSerpApi(query, gl, hl, key) {
+  const params = 'engine=google&q=' + encodeURIComponent(query) +
+    '&gl=' + encodeURIComponent(gl) + '&hl=' + encodeURIComponent(hl) +
+    '&num=' + MAX_RESULTS + '&api_key=' + encodeURIComponent(key);
+  const resp = await fetch('https://serpapi.com/search.json?' + params);
+  if (!resp.ok) {
+    throw new Error('SerpAPI returned HTTP ' + resp.status +
+      '. Check that your SerpAPI key is valid and has remaining monthly quota (https://serpapi.com).');
   }
-  if (json.knowledgeGraph) {
-    const kg = json.knowledgeGraph;
-    const desc = [kg.title, kg.type, kg.description].filter(Boolean).join(' — ');
-    if (desc) lines.push('KNOWLEDGE: ' + desc);
-  }
-  const organic = (json.organic || []).slice(0, MAX_RESULTS);
-  organic.forEach((r, i) => {
-    lines.push((i + 1) + '. ' + (r.title || '(no title)') + '\n   URL: ' + (r.link || '') +
-      '\n   ' + (r.snippet || ''));
-  });
-  if (lines.length === 0) return 'No results found for: ' + query;
-  return 'SEARCH RESULTS for "' + query + '":\n\n' + lines.join('\n\n');
+  const json = await resp.json();
+  if (json.error) throw new Error('SerpAPI error: ' + json.error);
+  return formatGoogleResults(query, json.answer_box, json.knowledge_graph, json.organic_results);
 }
 
 async function searchWithJina(query, secret) {
@@ -71,7 +99,8 @@ async function readPage(url, secret) {
     throw new Error('Invalid URL: "' + url + '". It must start with http:// or https://');
   }
   const headers = { 'X-Return-Format': 'markdown' };
-  if (isJinaKey(secret)) headers['Authorization'] = 'Bearer ' + secret.trim();
+  const p = detectProvider(secret);
+  if (p.provider === 'jina') headers['Authorization'] = 'Bearer ' + p.key;
   const resp = await fetch('https://r.jina.ai/' + url, { method: 'GET', headers: headers });
   if (!resp.ok) {
     throw new Error('Page reader returned HTTP ' + resp.status + ' for ' + url +
@@ -98,13 +127,15 @@ window['ai_edge_gallery_get_result'] = async (dataStr, secret) => {
     if (action === 'search') {
       if (!data.query) return JSON.stringify({ error: 'Missing required field "query" for search action.' });
       if (!secret) {
-        return JSON.stringify({ error: 'No API key configured. Add a Serper key (https://serper.dev) or Jina key (https://jina.ai) in the skill settings.' });
+        return JSON.stringify({ error: 'No API key configured. Add a Serper, SerpAPI or Jina key in the skill settings.' });
       }
       const gl = data.gl || 'ni';
       const hl = data.hl || 'es';
-      const result = isJinaKey(secret)
-        ? await searchWithJina(data.query, secret)
-        : await searchWithSerper(data.query, gl, hl, secret);
+      const p = detectProvider(secret);
+      let result;
+      if (p.provider === 'jina') result = await searchWithJina(data.query, p.key);
+      else if (p.provider === 'serpapi') result = await searchWithSerpApi(data.query, gl, hl, p.key);
+      else result = await searchWithSerper(data.query, gl, hl, p.key);
       return JSON.stringify({ result: result });
     }
 

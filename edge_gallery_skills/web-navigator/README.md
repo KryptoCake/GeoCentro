@@ -2,7 +2,7 @@
 
 Skill personalizada que le da a tus modelos locales (Gemma 4 E2B/E4B) acceso a la web en vivo, con dos acciones:
 
-- **search** — busca en Google (vía [Serper](https://serper.dev)) o en la web (vía [Jina Search](https://jina.ai)) y devuelve los mejores resultados con títulos, URLs y snippets.
+- **search** — busca en Google (vía [Serper](https://serper.dev) o [SerpAPI](https://serpapi.com)) o en la web (vía [Jina Search](https://jina.ai)) y devuelve los mejores resultados con títulos, URLs y snippets.
 - **read** — lee el contenido completo de cualquier página web, convertido a markdown limpio (vía [Jina Reader](https://r.jina.ai)), ideal para el contexto limitado de modelos pequeños.
 
 El modelo decide solo cuándo buscar y cuándo leer una página, siguiendo las instrucciones de `SKILL.md`.
@@ -12,9 +12,10 @@ El modelo decide solo cuándo buscar y cuándo leer una página, siguiendo las i
 | Proveedor | Qué da | Gratis |
 |---|---|---|
 | **Serper** ([serper.dev](https://serper.dev)) | Resultados reales de Google | 2,500 búsquedas |
+| **SerpAPI** ([serpapi.com](https://serpapi.com)) | Resultados reales de Google | 100 búsquedas/mes |
 | **Jina** ([jina.ai](https://jina.ai)) | Búsqueda web + lector de páginas | Tokens gratis al registrarse |
 
-La skill detecta cuál le diste: si la key empieza con `jina_`, usa Jina Search; si no, usa Serper. La acción **read** funciona en ambos casos (Jina Reader tiene un nivel gratuito sin key, aunque con límites de velocidad; con key de Jina el límite sube).
+La skill detecta cuál le diste automáticamente: keys `jina_...` → Jina Search; keys hexadecimales de 64 caracteres → SerpAPI; cualquier otra → Serper. Si la detección fallara, puedes forzar el proveedor con un prefijo: `serpapi:TU_KEY`, `serper:TU_KEY` o `jina:TU_KEY`. La acción **read** funciona con cualquiera de las tres (Jina Reader tiene un nivel gratuito sin key, aunque con límites de velocidad; con key de Jina el límite sube).
 
 > **Nota:** si Serper llegara a rechazar peticiones desde el webview de la app (error de red/CORS), usa una key de Jina — su API está diseñada para funcionar desde navegadores.
 

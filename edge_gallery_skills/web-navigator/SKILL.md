@@ -4,7 +4,7 @@ description: Search the live web and read the full content of web pages. Use for
 metadata:
   homepage: https://github.com/KryptoCake/GeoCentro/tree/main/edge_gallery_skills/web-navigator
   require-secret: true
-  require-secret-description: Enter a Serper API key from https://serper.dev (2,500 free Google searches) OR a Jina API key starting with "jina_" from https://jina.ai (free tokens on signup). Either one works.
+  require-secret-description: Enter ONE search API key - Serper (https://serper.dev, 2,500 free searches), SerpAPI (https://serpapi.com, 100 free searches/month), or Jina (https://jina.ai, key starts with "jina_"). The provider is auto-detected; you can also force it with a prefix like "serpapi:YOUR_KEY".
 ---
 
 ## Overview
