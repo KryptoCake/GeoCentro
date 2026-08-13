@@ -1,7 +1,7 @@
 import re
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import urllib3
 import database
 
@@ -25,6 +25,23 @@ sismo_regex = re.compile(
 def clean_html_tags(text):
     # Remove any stray html tags like </span> or <pre>
     return re.sub(r'<[^>]+>', '', text).strip()
+
+def local_to_utc(fecha, hora):
+    """Convierte hora local de Centroamérica (UTC-6) a UTC real.
+
+    INETER (Nicaragua) y OVSICORI (Costa Rica) publican la hora LOCAL de sus
+    países en sus feeds; ambos países están en UTC-6 sin horario de verano.
+    El plan de dedup v4 (D2) exige t_epoch en UTC real, y el hash_id se
+    calcula sobre la hora — si se guardara la hora local, los mismos eventos
+    quedarían desfasados 6h respecto a USGS y la ventana de matching ±45s
+    nunca los uniría. Devuelve (fecha, hora) ya convertidas a UTC.
+    """
+    try:
+        dt_local = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M:%S")
+        dt_utc = dt_local + timedelta(hours=6)
+        return dt_utc.strftime("%Y-%m-%d"), dt_utc.strftime("%H:%M:%S")
+    except ValueError:
+        return fecha, hora
 
 def get_country_from_desc(desc):
     desc_lower = desc.lower().strip()
@@ -92,7 +109,10 @@ def scrape_ovsicori_recientes():
                 fecha_formatted = date_obj.strftime('%Y-%m-%d')
             except ValueError:
                 fecha_formatted = fecha
-                
+
+            # OVSICORI publica hora local de Costa Rica (UTC-6) → convertir a UTC real
+            fecha_formatted, hora = local_to_utc(fecha_formatted, hora)
+
             country = database.determinar_pais_coordenadas(latitud, longitud, descripcion)
                 
             inserted = database.save_sismo(
@@ -185,7 +205,10 @@ def scrape_ovsicori_sentidos():
                 fecha_formatted = date_obj.strftime('%Y-%m-%d')
             except ValueError:
                 fecha_formatted = fecha
-                
+
+            # OVSICORI publica hora local de Costa Rica (UTC-6) → convertir a UTC real
+            fecha_formatted, hora = local_to_utc(fecha_formatted, hora)
+
             descripcion = f"{localizacion} (Origen: {origen}"
             if reportes:
                 descripcion += f", Sentido en: {reportes}"
@@ -276,7 +299,10 @@ def scrape_sismos():
                     date_formatted = datetime.strptime(date_yy, '%y/%m/%d').strftime('%Y-%m-%d')
                 except ValueError:
                     date_formatted = "20" + date_yy.replace('/', '-')
-                    
+
+                # INETER publica hora local de Nicaragua (UTC-6) → convertir a UTC real
+                date_formatted, time_hh = local_to_utc(date_formatted, time_hh)
+
                 country = database.determinar_pais_coordenadas(lat, lon, description)
                 
                 # Save to database
