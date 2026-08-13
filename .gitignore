@@ -30,6 +30,10 @@ Desktop.ini
 
 # Local backups
 backups/
+*.bak*
+
+# Logs
+scraper.log
 
 # Prob_calc data files
 Prob_calc/datos/
