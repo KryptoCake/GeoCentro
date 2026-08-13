@@ -2,6 +2,7 @@ import sqlite3
 import hashlib
 import os
 import math
+import re
 import statistics
 import sys
 from datetime import datetime, timezone
@@ -45,6 +46,21 @@ TELESISMO_KEYWORDS = {
     'brazil': 'Brasil', 'brasil': 'Brasil',
 }
 
+# Países de Centroamérica detectables en la descripción del sismo.
+# INETER/OVSICORI siempre cierran la descripción con el país de referencia
+# ("... Km al sur de Playa El Cuco, El Salvador"), por lo que la descripción es
+# la fuente más fiable para clasificar el país — sobre todo en epicentros
+# mar adentro cerca de fronteras, donde la distancia al bounding box fallaba.
+CA_DESC_KEYWORDS = {
+    'costa rica': 'Costa Rica',
+    'el salvador': 'El Salvador',
+    'guatemala': 'Guatemala',
+    'honduras': 'Honduras',
+    'nicaragua': 'Nicaragua',
+    'panamá': 'Panamá',
+    'panama': 'Panamá',
+}
+
 # Jerarquía de agencias por país — D5: la dedup opera sobre 'agencia' (institución)
 AGENCY_HIERARCHY = {
     'Costa Rica': ['OVSICORI', 'INETER'],
@@ -57,6 +73,23 @@ MAG_TYPE_PRIORITY = {'MW': 0, 'ML': 1, 'MC': 2}
 
 # Ventana temporal de matching (D2: ±45 s)
 MATCH_TIME_WINDOW = 45
+
+# ============================================================================
+# Lista negra de sismos fantasma (reportes erróneos de agencias ya corregidos)
+# ----------------------------------------------------------------------------
+# Caso 2026-08-10: OVSICORI publicó una localización preliminar errónea del
+# M7.4 de Colombia como "M6.6, 58.3 km al Sur de Panama" (06:35:40, 7.6121,
+# -80.9196). El evento real NO existe: USGS no lo registra y OVSICORI luego lo
+# corrigió a Colombia (M7.5, 06:34:29). Mientras OVSICORI no retire la fila de
+# su feed, el scraper reintentaría reinsertarla cada 30 min; este bloqueo lo
+# impide. El hash = sha256(fecha|hora|lat.4|lon.4), ver generate_sismo_hash.
+# ============================================================================
+HASHES_BLOQUEADOS = {
+    # Hash calculado con la hora local original (06:35:40) — el bug pre-fix
+    'fac7173653d47e655d3057cd7db5d82fd241447ac45b8d27acf9c37ba70d5905',
+    # Hash calculado con la hora UTC real (12:35:40) — el scraper corregido lo genera así
+    'b4f1ae311836b2686b5f9e032b45cb1bbc03bc1ca15e7f94b97fd09712b2ab04',
+}
 
 # ============================================================================
 # Funciones Utilitarias
@@ -93,16 +126,43 @@ def dist_to_bbox(lat, lon, bbox):
     return haversine(lat, lon, clamp_lat, clamp_lon)
 
 
-def determinar_pais_coordenadas(lat, lon, descripcion=""):
-    """Clasifica el país de un sismo basándose en coordenadas (dato duro)
-    y descripción (solo para telesismos fuera de CA) — D6.
+def _pais_desde_descripcion(desc_lower):
+    """Devuelve el país nombrado en la descripción, o None si no hay match.
 
-    Algoritmo:
-    1. Distancia mínima al bounding box de cada país de CA
-    2. País con distancia mínima gana si d <= 500 km
-    3. Si d > 500 km: keywords en descripción para países lejanos
-    4. Sin match → 'Otros'
+    Usa coincidencia de palabra completa (word boundary) para evitar falsos
+    positivos por subcadenas: p.ej. 'Brasilito' (playa de Guanacaste) no debe
+    casar con 'brasil', ni 'Los Chiles' (Alajuela) con 'chile'.
     """
+    for keyword, country_name in CA_DESC_KEYWORDS.items():
+        if re.search(r'\b' + re.escape(keyword) + r'\b', desc_lower):
+            return country_name
+    for keyword, country_name in TELESISMO_KEYWORDS.items():
+        if re.search(r'\b' + re.escape(keyword) + r'\b', desc_lower):
+            return country_name
+    return None
+
+
+def determinar_pais_coordenadas(lat, lon, descripcion=""):
+    """Clasifica el país de un sismo — D6 (revisado 2026-08-13).
+
+    Prioridad:
+    1. País nombrado en la descripción (INETER/OVSICORI lo indican de forma
+       explícita: "... Km al sur de Playa El Cuco, El Salvador"). Es la fuente
+       más fiable, sobre todo para epicentros mar adentro cerca de fronteras,
+       donde la distancia al bounding box fallaba (asignaba Honduras a un sismo
+       frente a El Salvador, o Guatemala a un sismo de México).
+    2. Si la descripción no nombra un país: distancia mínima al bounding box de
+       cada país de CA (gana el más cercano si d <= 500 km).
+    3. Sin match → 'Otros'.
+    """
+    desc_lower = (descripcion or "").lower()
+
+    # 1-2. País nombrado explícitamente en la descripción (CA primero, luego telesismos)
+    pais_desc = _pais_desde_descripcion(desc_lower)
+    if pais_desc:
+        return pais_desc
+
+    # 3. Fallback por coordenadas: país de CA más cercano (si d <= 500 km)
     min_dist = float('inf')
     closest_country = 'Otros'
 
@@ -114,12 +174,6 @@ def determinar_pais_coordenadas(lat, lon, descripcion=""):
 
     if min_dist <= 500.0:
         return closest_country
-
-    # Telesismo: buscar keywords en la descripción
-    desc_lower = (descripcion or "").lower()
-    for keyword, country_name in TELESISMO_KEYWORDS.items():
-        if keyword in desc_lower:
-            return country_name
 
     return 'Otros'
 
@@ -308,6 +362,10 @@ def save_sismo(fecha_utc, hora_utc, latitud, longitud, profundidad, magnitud, ti
     Transparente para el resto del código: la UI sigue leyendo 'sismos'.
     Retorna True si el reporte fue insertado (nuevo en raw), False si ya existía."""
     hash_id = generate_sismo_hash(fecha_utc, hora_utc, latitud, longitud)
+    if hash_id in HASHES_BLOQUEADOS:
+        print(f"[BLOQUEADO] sismo fantasma ignorado (hash en lista negra): "
+              f"{fecha_utc} {hora_utc} M{magnitud} {descripcion}")
+        return False
     t_epoch = compute_t_epoch(fecha_utc, hora_utc)
     pais = determinar_pais_coordenadas(latitud, longitud, descripcion)
 
