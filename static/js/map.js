@@ -192,13 +192,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const radiusSize = Math.max(mag * 3.5, 6);
             
             const popupHTML = `
-                <div class="map-popup sismo-popup" style="color: #111827; font-family: 'Outfit', sans-serif;">
+                <div class="map-popup sismo-popup" style="color: #f1f5f9; font-family: 'Outfit', sans-serif;">
                     <div class="popup-mag-badge ${markerClass}" style="font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; display: inline-block;">Mw ${mag.toFixed(1)}</div>
-                    <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; color: #111827;">${s.descripcion}</h4>
-                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Fecha (UTC):</strong> ${s.fecha_utc}</p>
-                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Hora (UTC):</strong> ${s.hora_utc}</p>
-                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Profundidad:</strong> ${depth} km</p>
-                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Coordenadas:</strong> ${lat.toFixed(3)}, ${lon.toFixed(3)}</p>
+                    <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; color: #f1f5f9;">${s.descripcion}</h4>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #d1d5db;"><strong>Fecha (UTC):</strong> ${s.fecha_utc}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #d1d5db;"><strong>Hora (UTC):</strong> ${s.hora_utc}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #d1d5db;"><strong>Profundidad:</strong> ${depth} km</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #d1d5db;"><strong>Coordenadas:</strong> ${lat.toFixed(3)}, ${lon.toFixed(3)}</p>
                     <p style="font-size: 0.8rem; margin: 4px 0 0 0; color: var(--text-muted); font-style: italic;">Sismo Regional (Locales)</p>
                 </div>
             `;
@@ -239,14 +239,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const radiusSize = Math.max(mag * 3.5, 6);
             
             const popupHTML = `
-                <div class="map-popup sismo-popup" style="color: #111827; font-family: 'Outfit', sans-serif;">
+                <div class="map-popup sismo-popup" style="color: #f1f5f9; font-family: 'Outfit', sans-serif;">
                     <div class="popup-mag-badge ${markerClass}" style="font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; display: inline-block;">Mw ${mag.toFixed(1)}</div>
-                    <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; color: #111827;">${s.descripcion}</h4>
-                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Fecha (UTC):</strong> ${s.fecha_utc}</p>
-                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Hora (UTC):</strong> ${s.hora_utc}</p>
-                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Profundidad:</strong> ${depth} km</p>
-                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>Coordenadas:</strong> ${lat.toFixed(3)}, ${lon.toFixed(3)}</p>
-                    <p style="font-size: 0.8rem; margin: 2px 0; color: #374151;"><strong>País:</strong> ${s.pais}</p>
+                    <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; color: #f1f5f9;">${s.descripcion}</h4>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #d1d5db;"><strong>Fecha (UTC):</strong> ${s.fecha_utc}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #d1d5db;"><strong>Hora (UTC):</strong> ${s.hora_utc}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #d1d5db;"><strong>Profundidad:</strong> ${depth} km</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #d1d5db;"><strong>Coordenadas:</strong> ${lat.toFixed(3)}, ${lon.toFixed(3)}</p>
+                    <p style="font-size: 0.8rem; margin: 2px 0; color: #d1d5db;"><strong>País:</strong> ${s.pais}</p>
                     ${s.url ? `<a href="${s.url}" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; margin-top: 8px; font-weight: 600; color: var(--accent);"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver en USGS</a>` : ''}
                 </div>
             `;
